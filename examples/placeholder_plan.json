@@ -1,0 +1,229 @@
+{
+  "name": "Placeholder 4-week plan",
+  "weeks": [
+    {
+      "phase": "base",
+      "days": {
+        "0": [
+          {
+            "discipline": "rest",
+            "duration_min": 0,
+            "intensity": 1,
+            "description": "rest"
+          }
+        ],
+        "1": [
+          {
+            "discipline": "swim",
+            "duration_min": 40,
+            "intensity": 2,
+            "description": "easy swim"
+          }
+        ],
+        "2": [
+          {
+            "discipline": "bike",
+            "duration_min": 60,
+            "intensity": 3,
+            "description": "tempo ride",
+            "key": true
+          }
+        ],
+        "3": [
+          {
+            "discipline": "run",
+            "duration_min": 40,
+            "intensity": 2,
+            "description": "easy run"
+          }
+        ],
+        "5": [
+          {
+            "discipline": "bike",
+            "duration_min": 90,
+            "intensity": 2,
+            "description": "long ride",
+            "key": true
+          }
+        ],
+        "6": [
+          {
+            "discipline": "run",
+            "duration_min": 60,
+            "intensity": 2,
+            "description": "long run",
+            "key": true
+          }
+        ]
+      }
+    },
+    {
+      "phase": "build",
+      "days": {
+        "0": [
+          {
+            "discipline": "rest",
+            "duration_min": 0,
+            "intensity": 1,
+            "description": "rest"
+          }
+        ],
+        "1": [
+          {
+            "discipline": "swim",
+            "duration_min": 48,
+            "intensity": 2,
+            "description": "easy swim"
+          }
+        ],
+        "2": [
+          {
+            "discipline": "bike",
+            "duration_min": 72,
+            "intensity": 3,
+            "description": "tempo ride",
+            "key": true
+          }
+        ],
+        "3": [
+          {
+            "discipline": "run",
+            "duration_min": 48,
+            "intensity": 2,
+            "description": "easy run"
+          }
+        ],
+        "5": [
+          {
+            "discipline": "bike",
+            "duration_min": 108,
+            "intensity": 2,
+            "description": "long ride",
+            "key": true
+          }
+        ],
+        "6": [
+          {
+            "discipline": "run",
+            "duration_min": 72,
+            "intensity": 2,
+            "description": "long run",
+            "key": true
+          }
+        ]
+      }
+    },
+    {
+      "phase": "peak",
+      "days": {
+        "0": [
+          {
+            "discipline": "rest",
+            "duration_min": 0,
+            "intensity": 1,
+            "description": "rest"
+          }
+        ],
+        "1": [
+          {
+            "discipline": "swim",
+            "duration_min": 52,
+            "intensity": 2,
+            "description": "easy swim"
+          }
+        ],
+        "2": [
+          {
+            "discipline": "bike",
+            "duration_min": 78,
+            "intensity": 3,
+            "description": "tempo ride",
+            "key": true
+          }
+        ],
+        "3": [
+          {
+            "discipline": "run",
+            "duration_min": 52,
+            "intensity": 2,
+            "description": "easy run"
+          }
+        ],
+        "5": [
+          {
+            "discipline": "bike",
+            "duration_min": 117,
+            "intensity": 2,
+            "description": "long ride",
+            "key": true
+          }
+        ],
+        "6": [
+          {
+            "discipline": "run",
+            "duration_min": 78,
+            "intensity": 2,
+            "description": "long run",
+            "key": true
+          }
+        ]
+      }
+    },
+    {
+      "phase": "taper",
+      "days": {
+        "0": [
+          {
+            "discipline": "rest",
+            "duration_min": 0,
+            "intensity": 1,
+            "description": "rest"
+          }
+        ],
+        "1": [
+          {
+            "discipline": "swim",
+            "duration_min": 24,
+            "intensity": 2,
+            "description": "easy swim"
+          }
+        ],
+        "2": [
+          {
+            "discipline": "bike",
+            "duration_min": 36,
+            "intensity": 3,
+            "description": "tempo ride",
+            "key": true
+          }
+        ],
+        "3": [
+          {
+            "discipline": "run",
+            "duration_min": 24,
+            "intensity": 2,
+            "description": "easy run"
+          }
+        ],
+        "5": [
+          {
+            "discipline": "bike",
+            "duration_min": 54,
+            "intensity": 2,
+            "description": "long ride",
+            "key": true
+          }
+        ],
+        "6": [
+          {
+            "discipline": "run",
+            "duration_min": 36,
+            "intensity": 2,
+            "description": "long run",
+            "key": true
+          }
+        ]
+      }
+    }
+  ]
+}
