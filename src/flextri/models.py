@@ -65,13 +65,45 @@ class PlanTemplate:
         return len(self.weeks)
 
 
+class Experience(str, Enum):
+    FIRST = "first"  # first triathlon
+    SOME = "some"  # done a few
+    EXPERIENCED = "experienced"
+
+
+class Distance(str, Enum):
+    SPRINT = "sprint"
+    OLYMPIC = "olympic"
+    HALF = "70.3"
+    FULL = "full"
+
+
+MONDAY, SUNDAY = 0, 6
+WEEKEND = {5, 6}
+
+
 @dataclass
 class Athlete:
+    """The athlete's profile: everything the onboarding wizard asks."""
+
     name: str
     start_date: date
     race_date: date
-    available_days: set[int] = field(default_factory=lambda: set(range(7)))
-    max_session_min: int | None = None
+    available_days: set[int] = field(default_factory=lambda: set(range(7)))  # weekday numbers, 0 = Mon
+    max_session_min: int | None = None  # applies to every day unless weekday/weekend limits are set
+    week_start: int = MONDAY  # MONDAY or SUNDAY
+    experience: Experience = Experience.SOME
+    weekly_hours: float | None = None
+    distance: Distance = Distance.OLYMPIC
+    goal: str = "finish"  # "finish" or a target time such as "2:45:00"
+    max_weekday_min: int | None = None
+    max_weekend_min: int | None = None
+    long_day: int | None = None  # weekday for the week's longest session
+    pool_days: set[int] | None = None  # None = pool every day
+
+    def limit_for(self, weekday: int) -> int | None:
+        specific = self.max_weekend_min if weekday in WEEKEND else self.max_weekday_min
+        return specific if specific is not None else self.max_session_min
 
 
 @dataclass
@@ -102,11 +134,27 @@ class CheckIn:
 
 
 @dataclass
+class DayAction:
+    """A choice the athlete made on the calendar (easier, swap, move, rest, add)."""
+
+    date: date
+    kind: str
+    workout_id: int | None = None
+    detail: str = ""
+
+
+@dataclass
 class Schedule:
     athlete: Athlete
     plan_name: str
     workouts: list[ScheduledWorkout] = field(default_factory=list)
     checkins: list[CheckIn] = field(default_factory=list)
+    actions: list[DayAction] = field(default_factory=list)
+    template: PlanTemplate | None = None  # kept so the schedule can be rebuilt after a setup edit
+    history: list[dict] = field(default_factory=list)  # snapshots for undo, newest last
+
+    def next_id(self) -> int:
+        return max((w.id for w in self.workouts), default=0) + 1
 
     def on(self, day: date) -> list[ScheduledWorkout]:
         return [w for w in self.workouts if w.date == day]
