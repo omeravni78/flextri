@@ -165,9 +165,19 @@ def _login() -> GarminClient:
     return client
 
 
+def _test_schedule(day: date) -> Schedule:
+    """One 20-minute easy run, to check the Garmin connection without a flexTri plan."""
+    from .models import Athlete, Phase
+
+    run = ScheduledWorkout(id=1, date=day, workout=Workout(Discipline.RUN, 20, 2, "test run"), phase=Phase.BASE)
+    return Schedule(athlete=Athlete("test", day, day), plan_name="test", workouts=[run])
+
+
 def _load(args: argparse.Namespace) -> Schedule:
     from .storage import SqliteStore, load_schedule
 
+    if args.test:
+        return _test_schedule(date.fromisoformat(args.start) if args.start else date.today())
     if args.data:
         return load_schedule(args.data)
     if not Path(args.db).exists():
@@ -186,6 +196,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--data", type=Path, help="CLI JSON schedule, used instead of --db")
     p.add_argument("--start", help="YYYY-MM-DD, default today")
     p.add_argument("--days", type=int, default=7)
+    p.add_argument("--test", action="store_true",
+                   help="send one 20-minute easy run instead of the plan, to check the connection")
     p.add_argument("--export", type=Path, metavar="DIR",
                    help="write workout JSON files for the Chrome extension instead of logging in")
     args = p.parse_args(argv)

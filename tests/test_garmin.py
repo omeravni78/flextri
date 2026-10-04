@@ -90,3 +90,13 @@ def test_export_writes_one_json_file_per_workout(tmp_path):
     paths = export_schedule(schedule, tmp_path / "out", date(2026, 10, 5), 7)
     assert [p.name for p in paths] == ["2026-10-06_race-pace-brick-bike.json", "2026-10-06_race-pace-brick-run.json"]
     assert json.loads(paths[0].read_text())["sportType"]["sportTypeKey"] == "cycling"
+
+
+def test_test_mode_sends_one_easy_run_without_a_plan(tmp_path, monkeypatch, capsys):
+    from flextri import garmin
+
+    fake = FakeGarmin()
+    monkeypatch.setattr(garmin, "_login", lambda: fake)
+    garmin.main(["--test", "--db", str(tmp_path / "missing.db"), "--start", "2026-10-05"])
+    assert capsys.readouterr().out.strip() == "2026-10-05 flexTri: test run: added"
+    assert fake.uploaded[0]["estimatedDurationInSecs"] == 20 * 60
