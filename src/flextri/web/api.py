@@ -37,6 +37,11 @@ def get_today() -> date:
     return date.today()
 
 
+from .garmin_ui import router as garmin_router  # noqa: E402  (garmin_ui needs get_store and get_today)
+
+app.include_router(garmin_router)
+
+
 class ProfileIn(BaseModel):
     """The wizard's answers."""
 
