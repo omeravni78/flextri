@@ -75,3 +75,18 @@ def test_reads_schedule_from_web_app_database(tmp_path, monkeypatch, capsys):
     garmin.main(["--db", str(db), "--start", "2026-10-05"])
     assert "2026-10-06 flexTri: easy run: added" in capsys.readouterr().out
     assert fake.scheduled == [(1, "2026-10-06")]
+
+
+def test_export_writes_one_json_file_per_workout(tmp_path):
+    import json
+
+    from flextri.garmin import export_schedule
+
+    athlete = Athlete("omer", date(2026, 10, 5), date(2026, 12, 27))
+    schedule = Schedule(athlete, "p", [
+        _sw(1, date(2026, 10, 6), Discipline.BRICK, 90, desc="Race-pace brick"),
+        _sw(2, date(2026, 10, 7), Discipline.REST, 0),
+    ])
+    paths = export_schedule(schedule, tmp_path / "out", date(2026, 10, 5), 7)
+    assert [p.name for p in paths] == ["2026-10-06_race-pace-brick-bike.json", "2026-10-06_race-pace-brick-run.json"]
+    assert json.loads(paths[0].read_text())["sportType"]["sportTypeKey"] == "cycling"

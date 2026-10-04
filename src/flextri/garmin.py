@@ -13,11 +13,17 @@ It reads the same SQLite database as the web app (``FLEXTRI_DB``, default
 
 After the first login the tokens are cached in ``~/.garminconnect`` and the
 password is no longer needed.
+
+Without logging in, ``--export DIR`` writes one Garmin workout JSON file per
+session instead. Import those in Garmin Connect web with the "Share your Garmin
+Connect workout" Chrome extension, then drag them onto the calendar.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
+import re
 import os
 from datetime import date, timedelta
 from pathlib import Path
@@ -112,22 +118,38 @@ def _already_scheduled(client: GarminClient, start: date, end: date) -> set[tupl
     return seen
 
 
+def _window(schedule: Schedule, start: date, days: int):
+    end = start + timedelta(days=days - 1)
+    for sw in schedule.workouts:
+        if start <= sw.date <= end and sw.status == WorkoutStatus.PLANNED:
+            for payload in to_garmin_workouts(sw):
+                yield sw.date, payload
+
+
+def export_schedule(schedule: Schedule, out_dir: Path, start: date, days: int) -> list[Path]:
+    """Write each planned workout in the window as a Garmin workout JSON file."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for day, payload in _window(schedule, start, days):
+        slug = re.sub(r"[^a-z0-9]+", "-", payload["workoutName"].removeprefix(NAME_PREFIX).lower()).strip("-")
+        path = out_dir / f"{day.isoformat()}_{slug}.json"
+        path.write_text(json.dumps(payload, indent=2))
+        paths.append(path)
+    return paths
+
+
 def push_schedule(schedule: Schedule, client: GarminClient, start: date, days: int) -> list[str]:
     """Upload and schedule planned workouts from ``start`` for ``days`` days; skips ones already there."""
-    end = start + timedelta(days=days - 1)
-    seen = _already_scheduled(client, start, end)
+    seen = _already_scheduled(client, start, start + timedelta(days=days - 1))
     lines = []
-    for sw in schedule.workouts:
-        if not (start <= sw.date <= end) or sw.status != WorkoutStatus.PLANNED:
+    for day, payload in _window(schedule, start, days):
+        key = (day.isoformat(), payload["workoutName"])
+        if key in seen:
+            lines.append(f"{key[0]} {key[1]}: already on Garmin")
             continue
-        for payload in to_garmin_workouts(sw):
-            key = (sw.date.isoformat(), payload["workoutName"])
-            if key in seen:
-                lines.append(f"{key[0]} {key[1]}: already on Garmin")
-                continue
-            created = client.upload_workout(payload)
-            client.schedule_workout(created["workoutId"], key[0])
-            lines.append(f"{key[0]} {key[1]}: added")
+        created = client.upload_workout(payload)
+        client.schedule_workout(created["workoutId"], key[0])
+        lines.append(f"{key[0]} {key[1]}: added")
     return lines
 
 
@@ -164,8 +186,14 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--data", type=Path, help="CLI JSON schedule, used instead of --db")
     p.add_argument("--start", help="YYYY-MM-DD, default today")
     p.add_argument("--days", type=int, default=7)
+    p.add_argument("--export", type=Path, metavar="DIR",
+                   help="write workout JSON files for the Chrome extension instead of logging in")
     args = p.parse_args(argv)
     start = date.fromisoformat(args.start) if args.start else date.today()
+    if args.export:
+        paths = export_schedule(_load(args), args.export, start, args.days)
+        print("\n".join(str(path) for path in paths) or "Nothing to export in that window.")
+        return
     lines = push_schedule(_load(args), _login(), start, args.days)
     print("\n".join(lines) or "Nothing to send in that window.")
 
