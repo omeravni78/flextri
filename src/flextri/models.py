@@ -7,6 +7,10 @@ from datetime import date
 from enum import Enum
 
 
+def nice_date(d: date) -> str:
+    return f"{d:%a} {d.day} {d:%b}"
+
+
 class Discipline(str, Enum):
     SWIM = "swim"
     BIKE = "bike"
@@ -116,6 +120,11 @@ class ScheduledWorkout:
     phase: Phase
     status: WorkoutStatus = WorkoutStatus.PLANNED
     adjustments: list[str] = field(default_factory=list)
+
+    @property
+    def label(self) -> str:
+        """How the athlete refers to it, e.g. "Tue 6 Oct swim"."""
+        return f"{nice_date(self.date)} {self.workout.discipline.value}"
 
 
 @dataclass

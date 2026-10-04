@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from .models import CheckIn, Discipline, Schedule, ScheduledWorkout, WorkoutStatus
+from .models import CheckIn, Discipline, Schedule, ScheduledWorkout, WorkoutStatus, nice_date
 
 EXPECTED_RPE = {1: 3, 2: 4, 3: 6, 4: 8, 5: 9}
 PARTIAL_RATIO = 0.7
@@ -54,13 +54,13 @@ def reschedule_key(schedule: Schedule, sw: ScheduledWorkout, today: date) -> lis
             continue
         for w in that_day:
             w.status = WorkoutStatus.DROPPED
-            w.adjustments.append(f"dropped to make room for missed key session #{sw.id}")
+            w.adjustments.append(f"dropped to make room for the missed {sw.label}")
         sw.date = day
         sw.status = WorkoutStatus.PLANNED
-        sw.adjustments.append(f"missed on {today}, moved to {day}")
-        return [f"Moved missed key session #{sw.id} to {day}"]
+        sw.adjustments.append(f"missed on {nice_date(today)}, moved to {nice_date(day)}")
+        return [f"Moved missed key session ({sw.workout.discipline.value}) to {nice_date(day)}"]
     sw.adjustments.append("missed, no free day to move it to")
-    return [f"Could not fit missed key session #{sw.id} in the next {RESCHEDULE_WINDOW_DAYS} days"]
+    return [f"Could not fit the missed {sw.label} in the next {RESCHEDULE_WINDOW_DAYS} days"]
 
 
 def _strained(schedule: Schedule, checkin: CheckIn, sw: ScheduledWorkout | None) -> bool:
@@ -95,8 +95,8 @@ def apply_checkin(schedule: Schedule, checkin: CheckIn) -> list[str]:
         for w in schedule.on(today + timedelta(days=1)):
             if _is_training(w):
                 w.status = WorkoutStatus.DROPPED
-                w.adjustments.append(f"rest day after check-in on {today}")
-                changes.append(f"Dropped #{w.id} for a rest day")
+                w.adjustments.append(f"rest day after your check-in on {nice_date(today)}")
+                changes.append(f"Dropped {w.label} for a rest day")
 
     if _strained(schedule, checkin, sw):
         for w in schedule.upcoming(today, 2):
@@ -104,8 +104,8 @@ def apply_checkin(schedule: Schedule, checkin: CheckIn) -> list[str]:
                 continue
             w.workout.duration_min = round(w.workout.duration_min * 0.8)
             w.workout.intensity = min(w.workout.intensity, 2)
-            w.adjustments.append(f"eased after check-in on {today}")
-            changes.append(f"Eased #{w.id} to {w.workout.duration_min} min, zone {w.workout.intensity}")
+            w.adjustments.append(f"eased after your check-in on {nice_date(today)}")
+            changes.append(f"Eased {w.label} to {w.workout.duration_min} min, zone {w.workout.intensity}")
 
     recent = [c for c in schedule.checkins if c.workout_id is not None][-3:]
     if len(recent) == 3 and all(_fresh(schedule, c) for c in recent):
@@ -113,7 +113,7 @@ def apply_checkin(schedule: Schedule, checkin: CheckIn) -> list[str]:
             if not _is_training(w) or w.workout.key or any(a.startswith(("eased", "bumped")) for a in w.adjustments):
                 continue
             w.workout.duration_min = round(w.workout.duration_min * 1.05)
-            w.adjustments.append(f"bumped +5% after fresh streak ending {today}")
-            changes.append(f"Bumped #{w.id} to {w.workout.duration_min} min")
+            w.adjustments.append(f"bumped +5% after a fresh streak ending {nice_date(today)}")
+            changes.append(f"Bumped {w.label} to {w.workout.duration_min} min")
 
     return changes

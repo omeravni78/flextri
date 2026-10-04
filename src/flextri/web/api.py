@@ -142,29 +142,42 @@ def calendar(around: date | None = None, store: SqliteStore = Depends(get_store)
     return build_calendar(_loaded(store), today, around)
 
 
+def perform_action(schedule, day: date, a: ActionIn, today: date) -> list[str]:
+    """Run one calendar choice. Raises actions.ActionError with a message for the athlete."""
+    if a.kind == "rest":
+        return actions.rest(schedule, day, today)
+    if a.kind == "add":
+        if a.discipline is None or a.duration_min is None:
+            raise actions.ActionError("An extra session needs a sport and a duration")
+        return actions.add(schedule, day, Workout(a.discipline, a.duration_min, a.intensity, "extra session"), today)
+    if a.workout_id is None:
+        raise actions.ActionError("Pick a session")
+    if a.kind == "easier":
+        return actions.easier(schedule, a.workout_id, today)
+    if a.kind == "swap":
+        if a.discipline is None:
+            raise actions.ActionError("Pick a sport to swap to")
+        return actions.swap(schedule, a.workout_id, a.discipline, today)
+    if a.new_date is None:
+        raise actions.ActionError("Pick a day to move to")
+    return actions.move(schedule, a.workout_id, a.new_date, today)
+
+
+def check_checkin(schedule, c: CheckInIn, today: date) -> None:
+    if c.date > today or (today - c.date).days > 2:
+        raise actions.ActionError("Check-ins are for today or up to 2 days back")
+    if c.workout_id is not None:
+        try:
+            schedule.get(c.workout_id)
+        except KeyError:
+            raise actions.ActionError(f"No session #{c.workout_id}") from None
+
+
 @app.post("/api/days/{day}/actions")
 def day_action(day: date, a: ActionIn, store: SqliteStore = Depends(get_store), today: date = Depends(get_today)):
     schedule = _loaded(store)
     try:
-        if a.kind == "rest":
-            changes = actions.rest(schedule, day, today)
-        elif a.kind == "add":
-            if a.discipline is None or a.duration_min is None:
-                raise actions.ActionError("An extra session needs a sport and a duration")
-            changes = actions.add(schedule, day, Workout(a.discipline, a.duration_min, a.intensity, "extra session"), today)
-        else:
-            if a.workout_id is None:
-                raise actions.ActionError("Pick a session")
-            if a.kind == "easier":
-                changes = actions.easier(schedule, a.workout_id, today)
-            elif a.kind == "swap":
-                if a.discipline is None:
-                    raise actions.ActionError("Pick a sport to swap to")
-                changes = actions.swap(schedule, a.workout_id, a.discipline, today)
-            else:
-                if a.new_date is None:
-                    raise actions.ActionError("Pick a day to move to")
-                changes = actions.move(schedule, a.workout_id, a.new_date, today)
+        changes = perform_action(schedule, day, a, today)
     except actions.ActionError as e:
         raise HTTPException(400, str(e)) from None
     store.save(schedule)
@@ -185,13 +198,10 @@ def undo(store: SqliteStore = Depends(get_store)):
 @app.post("/api/checkins")
 def checkin(c: CheckInIn, store: SqliteStore = Depends(get_store), today: date = Depends(get_today)):
     schedule = _loaded(store)
-    if c.date > today or (today - c.date).days > 2:
-        raise HTTPException(400, "Check-ins are for today or up to 2 days back")
-    if c.workout_id is not None:
-        try:
-            schedule.get(c.workout_id)
-        except KeyError:
-            raise HTTPException(404, f"No session #{c.workout_id}") from None
+    try:
+        check_checkin(schedule, c, today)
+    except actions.ActionError as e:
+        raise HTTPException(400, str(e)) from None
     changes = apply_checkin(schedule, CheckIn(**c.model_dump()))
     store.save(schedule)
     return {"changes": changes}
@@ -201,3 +211,11 @@ def checkin(c: CheckInIn, store: SqliteStore = Depends(get_store), today: date =
 def summary(store: SqliteStore = Depends(get_store)):
     s = summarize(_loaded(store))
     return {**s.__dict__, "compliance": s.compliance}
+
+
+from .ui import router as ui_router  # noqa: E402  (ui imports helpers defined above)
+
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+
+app.include_router(ui_router)
+app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")

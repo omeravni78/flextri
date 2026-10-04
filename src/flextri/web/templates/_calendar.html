@@ -1,0 +1,60 @@
+{% set weekday_order = cal.weeks[0].days | map(attribute="weekday") | list %}
+{% if banner %}
+<div class="banner {{ 'error' if banner.error }}" role="status">
+  <ul>{% for b in banner["items"] %}<li>{{ b }}</li>{% endfor %}</ul>
+  {% if can_undo and not banner.error %}<button hx-post="/ui/undo" hx-vals='{"around": "{{ around }}"}' hx-target="#app">Undo</button>{% endif %}
+</div>
+{% endif %}
+<div class="layout">
+  <section>
+    <div class="toolbar">
+      <button hx-get="/ui/calendar?around={{ prev }}" hx-target="#app" aria-label="Previous week">‹</button>
+      <h1>{% if cal.weeks[0].number %}Week {{ cal.weeks[0].number }} of {{ cal.total_weeks }}{% else %}Your calendar{% endif %}</h1>
+      <button hx-get="/ui/calendar?around={{ next }}" hx-target="#app" aria-label="Next week">›</button>
+    </div>
+
+    <div class="strip" aria-label="Four weeks at a glance">
+      {% for w in cal.weeks %}{% for d in w.days %}
+        {% set real = d.sessions | rejectattr("discipline", "equalto", "rest") | list %}
+        {% set st = real | map(attribute="status") | list %}
+        <button title="{{ d.date | day }}" hx-get="/ui/day/{{ d.date }}" hx-target="#panel"
+          style="background: {% if 'missed' in st %}var(--missed){% elif 'partial' in st %}var(--partial){% elif 'done' in st %}var(--done){% elif 'planned' in st %}var(--card){% else %}var(--rest){% endif %}; {% if d.is_today %}border:2px solid var(--accent){% endif %}"></button>
+      {% endfor %}{% endfor %}
+    </div>
+
+    <div class="grid">
+      <div class="head"></div>
+      {% for wd in weekday_order %}<div class="head">{{ DAY_NAMES[wd] }}</div>{% endfor %}
+      {% for w in cal.weeks %}{% set wi = loop.index0 %}
+        <div class="weeklabel {{ 'later' if not loop.first }}">
+          <strong>{% if w.number %}Week {{ w.number }}{% else %}{{ w.first_day | day("%d %b") }}{% endif %}</strong>
+          <span class="hint">{{ w.phase or "" }}</span>
+          {% if w.planned_min %}<span class="hint">{{ (w.done_min / 60) | round(1) }} of {{ (w.planned_min / 60) | round(1) }} h</span>{% endif %}
+        </div>
+        {% for d in w.days %}
+        <button class="cell{{ ' today' if d.is_today }}{{ ' past' if not d.editable and not d.is_today }}{{ ' later' if wi > 0 }}{{ ' selected' if panel and panel.day.isoformat() == d.date }}"
+                hx-get="/ui/day/{{ d.date }}" hx-target="#panel" aria-label="{{ d.date | day('%A %d %B') }}">
+          <span class="date"><span><span class="wd">{{ DAY_NAMES[d.weekday] }}</span>{{ d.date | day("%d %b") if loop.first or d.date[8:] == "01" else d.date | day("%d") }}</span>{% if d.is_race_day %}<span title="Race day">🏁</span>{% elif d.sessions | selectattr("changed") | list %}<span class="dot" title="Changed by the app or by you"></span>{% endif %}</span>
+          {% for s in d.sessions %}
+            {% if s.discipline == "rest" %}<span class="chip rest sport-rest">rest</span>
+            {% else %}<span class="chip sport-{{ s.discipline }} {{ s.status }}"><span>{{ s.discipline }}{% if s.key %} <span class="k" title="Key session">★</span>{% endif %}</span><span>{{ s.duration_min }}′</span></span>{% endif %}
+          {% endfor %}
+        </button>
+        {% endfor %}
+      {% endfor %}
+    </div>
+
+    <div class="legend">
+      <span><i style="border-color:var(--done);background:color-mix(in srgb,var(--done) 22%,var(--card))"></i>Done</span>
+      <span><i style="border-color:var(--partial);background:color-mix(in srgb,var(--partial) 25%,var(--card))"></i>Partial</span>
+      <span><i style="border-color:var(--missed);background:color-mix(in srgb,var(--missed) 20%,var(--card))"></i>Missed</span>
+      <span><i></i>Planned</span>
+      <span>★ Key session</span>
+      <span><span class="dot"></span> Changed</span>
+      <span><i style="border-color:var(--swim)"></i>Swim</span>
+      <span><i style="border-color:var(--bike)"></i>Bike</span>
+      <span><i style="border-color:var(--run)"></i>Run</span>
+    </div>
+  </section>
+  <aside id="panel" class="panel" hx-on::after-settle="if (innerWidth < 760 && this.innerHTML.trim()) this.scrollIntoView({behavior: 'smooth'})">{% if panel %}{% with ctx = panel %}{% include "_day_inner.html" %}{% endwith %}{% endif %}</aside>
+</div>

@@ -1,0 +1,100 @@
+{% set info = ctx.info %}
+<div class="card dayp">
+<style>
+.dayp h2 { display: flex; justify-content: space-between; align-items: center; }
+.dayp .session { border-left: 4px solid var(--sport); padding: 8px 10px; margin: 10px 0; background: var(--bg); border-radius: 8px; }
+.dayp .session .title { font-weight: 600; }
+.dayp .why { font-size: 12px; color: var(--quiet); margin: 4px 0 0; padding-left: 16px; }
+.dayp .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.dayp .acts form { display: inline-flex; gap: 4px; margin: 0; }
+.dayp .acts select { padding: 6px; }
+.dayp details { margin-top: 8px; }
+.dayp summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.dayp .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.dayp .grid2 label { margin: 6px 0 2px; font-size: 13px; }
+.dayp .grid2 input, .dayp .grid2 select { width: 100%; }
+.dayp hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+</style>
+<h2>{{ ctx.day | day("%A %d %B") }}<button type="button" aria-label="Close" onclick="this.closest('#panel').innerHTML=''">✕</button></h2>
+{% if info.is_race_day %}<p><strong>🏁 Race day. Good luck!</strong></p>{% endif %}
+
+{% set real = info.sessions | rejectattr("discipline", "equalto", "rest") | list %}
+{% if not real %}<p class="hint">Rest day. Nothing planned.</p>{% endif %}
+
+{% for s in real %}
+<div class="session sport-{{ s.discipline }}">
+  <div class="title">{{ s.discipline | capitalize }} · {{ s.duration_min }} min · zone {{ s.intensity }}{% if s.key %} · ★ key{% endif %}</div>
+  <div class="hint">{{ s.description }} · <strong>{{ s.status }}</strong></div>
+  {% if s.adjustments %}<ul class="why">{% for a in s.adjustments %}<li>{{ a }}</li>{% endfor %}</ul>{% endif %}
+
+  {% if s.status == "planned" and info.editable %}
+  <div class="acts">
+    {% if s.can_ease %}<form hx-post="/ui/day/{{ info.date }}/action" hx-target="#app">
+      <input type="hidden" name="kind" value="easier"><input type="hidden" name="workout_id" value="{{ s.id }}"><input type="hidden" name="around" value="{{ ctx.day }}">
+      <button>Easier version</button>
+    </form>{% endif %}
+    {% if s.can_swap_to %}
+    <form hx-post="/ui/day/{{ info.date }}/action" hx-target="#app">
+      <input type="hidden" name="kind" value="swap"><input type="hidden" name="workout_id" value="{{ s.id }}"><input type="hidden" name="around" value="{{ ctx.day }}">
+      <select name="discipline" aria-label="Swap to">{% for d in s.can_swap_to %}<option value="{{ d }}">{{ d }}</option>{% endfor %}</select>
+      <button>Swap</button>
+    </form>
+    {% endif %}
+    {% if ctx.move_to %}
+    <form hx-post="/ui/day/{{ info.date }}/action" hx-target="#app">
+      <input type="hidden" name="kind" value="move"><input type="hidden" name="workout_id" value="{{ s.id }}"><input type="hidden" name="around" value="{{ ctx.day }}">
+      <select name="new_date" aria-label="Move to">{% for d in ctx.move_to %}<option value="{{ d }}">{{ d | day("%a %d") }}</option>{% endfor %}</select>
+      <button>Move</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if ctx.can_checkin and s.status in ("planned",) %}
+  <details {{ "open" if loop.first and info.is_today }}>
+    <summary>Check in</summary>
+    <form hx-post="/ui/day/{{ info.date }}/checkin" hx-target="#app">
+      <input type="hidden" name="workout_id" value="{{ s.id }}"><input type="hidden" name="around" value="{{ ctx.day }}">
+      <div class="chips" style="margin-top:8px">
+        <label><input type="radio" name="outcome" value="done" checked><span>Done</span></label>
+        <label><input type="radio" name="outcome" value="partial"><span>Partly</span></label>
+        <label><input type="radio" name="outcome" value="missed"><span>Missed</span></label>
+      </div>
+      <div class="grid2">
+        <div><label>Minutes</label><input type="number" name="minutes" min="0" value="{{ s.duration_min }}"></div>
+        <div><label>Effort (1 to 10)</label><input type="number" name="rpe" min="1" max="10" value="5"></div>
+        <div><label>Tiredness (1 to 5)</label><input type="number" name="fatigue" min="1" max="5" value="3"></div>
+        <div><label>Soreness (1 to 5)</label><input type="number" name="soreness" min="1" max="5" value="1"></div>
+      </div>
+      <label style="font-size:13px">Notes</label><input type="text" name="notes" style="width:100%">
+      <div style="margin-top:8px"><button class="primary">Save check-in</button></div>
+    </form>
+  </details>
+  {% endif %}
+</div>
+{% endfor %}
+
+{% if info.editable and real | selectattr("status", "equalto", "planned") | list %}
+<form hx-post="/ui/day/{{ info.date }}/action" hx-target="#app">
+  <input type="hidden" name="kind" value="rest"><input type="hidden" name="around" value="{{ ctx.day }}">
+  <button>Rest today</button>
+  <span class="hint">Key sessions move to another day.</span>
+</form>
+{% endif %}
+
+{% if ctx.can_add %}
+<hr>
+<details>
+  <summary>Add a session I did</summary>
+  <form hx-post="/ui/day/{{ info.date }}/action" hx-target="#app">
+    <input type="hidden" name="kind" value="add"><input type="hidden" name="around" value="{{ ctx.day }}">
+    <div class="grid2">
+      <div><label>Sport</label><select name="discipline">{% for d in ctx.sports %}<option>{{ d }}</option>{% endfor %}</select></div>
+      <div><label>Minutes</label><input type="number" name="duration_min" min="5" value="45" required></div>
+      <div><label>Zone (1 to 5)</label><input type="number" name="intensity" min="1" max="5" value="2"></div>
+    </div>
+    <div style="margin-top:8px"><button class="primary">Log it</button></div>
+  </form>
+</details>
+{% endif %}
+</div>
