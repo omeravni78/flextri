@@ -43,7 +43,7 @@ def _is_training(sw: ScheduledWorkout) -> bool:
     return sw.workout.discipline != Discipline.REST and sw.status == WorkoutStatus.PLANNED
 
 
-def _reschedule_key(schedule: Schedule, sw: ScheduledWorkout, today: date) -> list[str]:
+def reschedule_key(schedule: Schedule, sw: ScheduledWorkout, today: date) -> list[str]:
     athlete = schedule.athlete
     for offset in range(1, RESCHEDULE_WINDOW_DAYS + 1):
         day = today + timedelta(days=offset)
@@ -89,7 +89,7 @@ def apply_checkin(schedule: Schedule, checkin: CheckIn) -> list[str]:
     today = checkin.date
 
     if sw and sw.status == WorkoutStatus.MISSED and sw.workout.key:
-        changes += _reschedule_key(schedule, sw, today)
+        changes += reschedule_key(schedule, sw, today)
 
     if checkin.fatigue >= 5 or checkin.soreness >= 5:
         for w in schedule.on(today + timedelta(days=1)):

@@ -23,10 +23,11 @@ def _onboard(args: argparse.Namespace) -> None:
         race_date=date.fromisoformat(args.race),
         available_days={DAYS.index(d) for d in args.days.split(",")},
         max_session_min=args.max_session,
+        week_start=DAYS.index(args.week_start),
     )
     schedule = build_schedule(template, athlete)
     save_schedule(schedule, args.data)
-    n = weeks_until(athlete.start_date, athlete.race_date)
+    n = weeks_until(athlete.start_date, athlete.race_date, athlete.week_start)
     print(f"Welcome {athlete.name}! {template.name} ({template.length_weeks} weeks) fitted to {n} weeks, "
           f"{len(schedule.workouts)} sessions until {athlete.race_date}.")
 
@@ -75,6 +76,7 @@ def main(argv: list[str] | None = None) -> None:
     o.add_argument("--race", required=True, help="YYYY-MM-DD")
     o.add_argument("--days", default=",".join(DAYS), help="training days, e.g. mon,tue,thu,sat,sun")
     o.add_argument("--max-session", type=int)
+    o.add_argument("--week-start", choices=["mon", "sun"], default="mon")
     o.set_defaults(fn=_onboard)
 
     t = sub.add_parser("today")
