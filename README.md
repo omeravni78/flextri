@@ -10,7 +10,24 @@ athlete's real timeline, and adapt it every day from what they actually did.
    RPE, fatigue, soreness. Upcoming workouts adapt (`adaptation.py`).
 3. **Closing ceremony** (`flextri finish`): summary of the block (`ceremony.py`).
 
-## Try it
+## Web API (behind the wizard and calendar screens)
+```
+pip install -e '.[dev]'
+uvicorn flextri.web.api:app --reload   # then open http://127.0.0.1:8000/docs
+```
+| Endpoint | What it does |
+| --- | --- |
+| `POST /api/profile/preview` | Wizard step 4: how the plan fits, and what an edit would change |
+| `PUT /api/profile` | Wizard confirm, or "Edit my setup" (past days never change) |
+| `GET /api/calendar?around=YYYY-MM-DD` | 4 weeks from the athlete's chosen first weekday |
+| `POST /api/days/{date}/actions` | `easier`, `swap` (easy sessions only), `move` (same week), `rest`, `add` |
+| `POST /api/undo` | Undo the last day action |
+| `POST /api/checkins` | Daily check-in (today or up to 2 days back) |
+| `GET /api/summary` | Closing ceremony numbers |
+
+Data is one row in a local SQLite file (`FLEXTRI_DB`, default `flextri.db`); one athlete per install for now.
+
+## Try the CLI
 ```
 pip install -e '.[dev]'
 flextri onboard --template examples/placeholder_plan.json --name omer \
