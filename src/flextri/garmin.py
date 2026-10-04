@@ -6,7 +6,10 @@ logs in as the athlete the way the Garmin Connect mobile app does. Workouts land
 in the Garmin Connect calendar and sync to the watch on its next sync.
 
     pip install garminconnect
-    GARMIN_EMAIL=... GARMIN_PASSWORD=... python -m flextri.garmin --data flextri_data.json --days 7
+    GARMIN_EMAIL=... GARMIN_PASSWORD=... python -m flextri.garmin --days 7
+
+It reads the same SQLite database as the web app (``FLEXTRI_DB``, default
+``flextri.db``); ``--data`` reads a CLI JSON schedule instead.
 
 After the first login the tokens are cached in ``~/.garminconnect`` and the
 password is no longer needed.
@@ -140,17 +143,30 @@ def _login() -> GarminClient:
     return client
 
 
+def _load(args: argparse.Namespace) -> Schedule:
+    from .storage import SqliteStore, load_schedule
+
+    if args.data:
+        return load_schedule(args.data)
+    if not Path(args.db).exists():
+        raise SystemExit(f"No flexTri database at {args.db}; finish the setup wizard first or pass --db.")
+    schedule = SqliteStore(args.db).load()
+    if schedule is None:
+        raise SystemExit(f"{args.db} has no plan yet; finish the setup wizard first.")
+    return schedule
+
+
 def main(argv: list[str] | None = None) -> None:
-    from .storage import load_schedule
 
     p = argparse.ArgumentParser(prog="python -m flextri.garmin",
                                 description="Send upcoming flexTri workouts to Garmin Connect.")
-    p.add_argument("--data", type=Path, default=Path("flextri_data.json"))
+    p.add_argument("--db", default=os.environ.get("FLEXTRI_DB", "flextri.db"), help="web app SQLite database")
+    p.add_argument("--data", type=Path, help="CLI JSON schedule, used instead of --db")
     p.add_argument("--start", help="YYYY-MM-DD, default today")
     p.add_argument("--days", type=int, default=7)
     args = p.parse_args(argv)
     start = date.fromisoformat(args.start) if args.start else date.today()
-    lines = push_schedule(load_schedule(args.data), _login(), start, args.days)
+    lines = push_schedule(_load(args), _login(), start, args.days)
     print("\n".join(lines) or "Nothing to send in that window.")
 
 

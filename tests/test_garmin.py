@@ -61,3 +61,17 @@ def test_push_window_skips_done_and_already_scheduled():
     lines = push_schedule(schedule, garmin, date(2026, 10, 5), 7)
     assert garmin.scheduled == [(1, "2026-10-06")]
     assert lines == ["2026-10-06 flexTri: tempo ride: added", "2026-10-07 flexTri: easy swim: already on Garmin"]
+
+
+def test_reads_schedule_from_web_app_database(tmp_path, monkeypatch, capsys):
+    from flextri import garmin
+    from flextri.storage import SqliteStore
+
+    athlete = Athlete("omer", date(2026, 10, 5), date(2026, 12, 27))
+    db = tmp_path / "flextri.db"
+    SqliteStore(db).save(Schedule(athlete, "p", [_sw(1, date(2026, 10, 6), Discipline.RUN, 40, desc="easy run")]))
+    fake = FakeGarmin()
+    monkeypatch.setattr(garmin, "_login", lambda: fake)
+    garmin.main(["--db", str(db), "--start", "2026-10-05"])
+    assert "2026-10-06 flexTri: easy run: added" in capsys.readouterr().out
+    assert fake.scheduled == [(1, "2026-10-06")]
