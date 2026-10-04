@@ -1,0 +1,158 @@
+"""Push scheduled flexTri workouts to the Garmin Connect calendar.
+
+Garmin's official Training API is closed to new developers (applications paused
+since spring 2026), so this uses the unofficial ``garminconnect`` library, which
+logs in as the athlete the way the Garmin Connect mobile app does. Workouts land
+in the Garmin Connect calendar and sync to the watch on its next sync.
+
+    pip install garminconnect
+    GARMIN_EMAIL=... GARMIN_PASSWORD=... python -m flextri.garmin --data flextri_data.json --days 7
+
+After the first login the tokens are cached in ``~/.garminconnect`` and the
+password is no longer needed.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+from datetime import date, timedelta
+from pathlib import Path
+from typing import Any, Protocol
+
+from .models import Discipline, Schedule, ScheduledWorkout, Workout, WorkoutStatus
+
+NAME_PREFIX = "flexTri: "
+
+_SPORTS = {
+    Discipline.RUN: (1, "running"),
+    Discipline.BIKE: (2, "cycling"),
+    Discipline.SWIM: (3, "swimming"),
+}
+_STEP_TYPES = {"warmup": 1, "cooldown": 2, "interval": 3}
+BRICK_BIKE_SHARE = 2 / 3
+
+
+class GarminClient(Protocol):
+    """The slice of ``garminconnect.Garmin`` this module uses."""
+
+    def upload_workout(self, workout_json: dict[str, Any]) -> dict[str, Any]: ...
+    def schedule_workout(self, workout_id: int | str, date_str: str) -> dict[str, Any]: ...
+    def get_scheduled_workouts(self, year: int, month: int) -> dict[str, Any]: ...
+
+
+def _step(order: int, kind: str, minutes: int, zone: int | None) -> dict[str, Any]:
+    target: dict[str, Any] = {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target", "displayOrder": 1}
+    step: dict[str, Any] = {
+        "type": "ExecutableStepDTO",
+        "stepOrder": order,
+        "stepType": {"stepTypeId": _STEP_TYPES[kind], "stepTypeKey": kind, "displayOrder": _STEP_TYPES[kind]},
+        "endCondition": {"conditionTypeId": 2, "conditionTypeKey": "time", "displayOrder": 2, "displayable": True},
+        "endConditionValue": float(minutes * 60),
+        "targetType": target,
+    }
+    if zone is not None:
+        step["targetType"] = {"workoutTargetTypeId": 4, "workoutTargetTypeKey": "heart.rate.zone", "displayOrder": 4}
+        step["zoneNumber"] = zone
+    return step
+
+
+def _steps(minutes: int, zone: int, hr_target: bool) -> list[dict[str, Any]]:
+    """Warm-up and cool-down around a main set in the session's zone; short sessions are one step."""
+    main_zone = zone if hr_target else None
+    if minutes < 20:
+        return [_step(1, "interval", minutes, main_zone)]
+    edge = max(5, round(minutes * 0.15))
+    return [
+        _step(1, "warmup", edge, 1 if hr_target else None),
+        _step(2, "interval", minutes - 2 * edge, main_zone),
+        _step(3, "cooldown", edge, 1 if hr_target else None),
+    ]
+
+
+def _payload(discipline: Discipline, minutes: int, w: Workout, name: str) -> dict[str, Any]:
+    sport_id, sport_key = _SPORTS[discipline]
+    sport = {"sportTypeId": sport_id, "sportTypeKey": sport_key, "displayOrder": sport_id}
+    # Heart rate zones are meaningless on most wrist-based swim tracking, so swims get no target.
+    steps = _steps(minutes, w.intensity, hr_target=discipline != Discipline.SWIM)
+    return {
+        "workoutName": name,
+        "description": f"Zone {w.intensity}" + (" · key session" if w.key else ""),
+        "sportType": sport,
+        "estimatedDurationInSecs": minutes * 60,
+        "workoutSegments": [{"segmentOrder": 1, "sportType": sport, "workoutSteps": steps}],
+    }
+
+
+def to_garmin_workouts(sw: ScheduledWorkout) -> list[dict[str, Any]]:
+    """Garmin workout payloads for one scheduled session (bricks become a ride plus a run)."""
+    w = sw.workout
+    label = w.description or w.discipline.value
+    if w.discipline in _SPORTS and w.duration_min > 0:
+        return [_payload(w.discipline, w.duration_min, w, NAME_PREFIX + label)]
+    if w.discipline == Discipline.BRICK and w.duration_min > 0:
+        bike = round(w.duration_min * BRICK_BIKE_SHARE)
+        return [
+            _payload(Discipline.BIKE, bike, w, f"{NAME_PREFIX}{label} (bike)"),
+            _payload(Discipline.RUN, w.duration_min - bike, w, f"{NAME_PREFIX}{label} (run)"),
+        ]
+    return []  # rest and strength stay in flexTri only
+
+
+def _already_scheduled(client: GarminClient, start: date, end: date) -> set[tuple[str, str]]:
+    seen: set[tuple[str, str]] = set()
+    months = {(start.year, start.month), (end.year, end.month)}
+    for year, month in sorted(months):
+        for item in client.get_scheduled_workouts(year, month).get("calendarItems", []):
+            if item.get("itemType") == "workout":
+                seen.add((item.get("date", ""), item.get("title", "")))
+    return seen
+
+
+def push_schedule(schedule: Schedule, client: GarminClient, start: date, days: int) -> list[str]:
+    """Upload and schedule planned workouts from ``start`` for ``days`` days; skips ones already there."""
+    end = start + timedelta(days=days - 1)
+    seen = _already_scheduled(client, start, end)
+    lines = []
+    for sw in schedule.workouts:
+        if not (start <= sw.date <= end) or sw.status != WorkoutStatus.PLANNED:
+            continue
+        for payload in to_garmin_workouts(sw):
+            key = (sw.date.isoformat(), payload["workoutName"])
+            if key in seen:
+                lines.append(f"{key[0]} {key[1]}: already on Garmin")
+                continue
+            created = client.upload_workout(payload)
+            client.schedule_workout(created["workoutId"], key[0])
+            lines.append(f"{key[0]} {key[1]}: added")
+    return lines
+
+
+def _login() -> GarminClient:
+    try:
+        from garminconnect import Garmin
+    except ImportError:
+        raise SystemExit("Install the Garmin client first: pip install garminconnect") from None
+    tokens = os.environ.get("GARMINTOKENS", "~/.garminconnect")
+    client = Garmin(os.environ.get("GARMIN_EMAIL"), os.environ.get("GARMIN_PASSWORD"),
+                    prompt_mfa=lambda: input("Garmin MFA code: "))
+    client.login(tokens)
+    return client
+
+
+def main(argv: list[str] | None = None) -> None:
+    from .storage import load_schedule
+
+    p = argparse.ArgumentParser(prog="python -m flextri.garmin",
+                                description="Send upcoming flexTri workouts to Garmin Connect.")
+    p.add_argument("--data", type=Path, default=Path("flextri_data.json"))
+    p.add_argument("--start", help="YYYY-MM-DD, default today")
+    p.add_argument("--days", type=int, default=7)
+    args = p.parse_args(argv)
+    start = date.fromisoformat(args.start) if args.start else date.today()
+    lines = push_schedule(load_schedule(args.data), _login(), start, args.days)
+    print("\n".join(lines) or "Nothing to send in that window.")
+
+
+if __name__ == "__main__":
+    main()
