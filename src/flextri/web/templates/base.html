@@ -23,6 +23,8 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 header a { color: var(--ink); text-decoration: none; }
 .brand { font-weight: 700; font-size: 18px; }
 .brand span { color: var(--accent); }
+.quit { margin: 0 0 0 12px; }
+.quit button { padding: 4px 10px; color: var(--quiet); }
 main { max-width: 1180px; margin: 0 auto; padding: 16px; }
 h1 { font-size: 22px; margin: 4px 0 16px; }
 h2 { font-size: 17px; margin: 0 0 12px; }
@@ -50,7 +52,8 @@ label { display: block; margin: 10px 0 4px; font-weight: 600; }
 <body>
 <header>
   <a class="brand" href="/">flex<span>Tri</span></a>
-  {% block nav %}{% endblock %}
+  <div style="display:flex;align-items:center">{% block nav %}{% endblock %}
+  {% if request.app.state.desktop %}<form method="post" action="/app/quit" class="quit"><button title="Stop flexTri">Quit</button></form>{% endif %}</div>
 </header>
 <main>{% block main %}{% endblock %}</main>
 </body>

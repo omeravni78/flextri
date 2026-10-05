@@ -9,10 +9,11 @@ in the Garmin Connect calendar and sync to the watch on its next sync.
     GARMIN_EMAIL=... GARMIN_PASSWORD=... python -m flextri.garmin --days 7
 
 It reads the same SQLite database as the web app (``FLEXTRI_DB``, default
-``flextri.db``); ``--data`` reads a CLI JSON schedule instead.
+``flextri.db`` in flexTri's data folder, see ``paths.py``); ``--data`` reads a
+CLI JSON schedule instead.
 
-After the first login the tokens are cached in ``~/.garminconnect`` and the
-password is no longer needed.
+After the first login the tokens are cached in the data folder (``GARMINTOKENS``
+overrides it) and the password is no longer needed.
 
 Without logging in, ``--export DIR`` writes one Garmin workout JSON file per
 session instead. Import those in Garmin Connect web with the "Share your Garmin
@@ -158,7 +159,9 @@ def _login() -> GarminClient:
         from garminconnect import Garmin
     except ImportError:
         raise SystemExit("Install the Garmin client first: pip install garminconnect") from None
-    tokens = os.environ.get("GARMINTOKENS", "~/.garminconnect")
+    from .paths import garmin_tokens
+
+    tokens = str(garmin_tokens())
     client = Garmin(os.environ.get("GARMIN_EMAIL"), os.environ.get("GARMIN_PASSWORD"),
                     prompt_mfa=lambda: input("Garmin MFA code: "))
     client.login(tokens)
@@ -180,6 +183,10 @@ def _load(args: argparse.Namespace) -> Schedule:
         return _test_schedule(date.fromisoformat(args.start) if args.start else date.today())
     if args.data:
         return load_schedule(args.data)
+    if args.db is None:
+        from .paths import db_path
+
+        args.db = db_path()
     if not Path(args.db).exists():
         raise SystemExit(f"No flexTri database at {args.db}; finish the setup wizard first or pass --db.")
     schedule = SqliteStore(args.db).load()
@@ -192,7 +199,7 @@ def main(argv: list[str] | None = None) -> None:
 
     p = argparse.ArgumentParser(prog="python -m flextri.garmin",
                                 description="Send upcoming flexTri workouts to Garmin Connect.")
-    p.add_argument("--db", default=os.environ.get("FLEXTRI_DB", "flextri.db"), help="web app SQLite database")
+    p.add_argument("--db", type=Path, help="web app SQLite database (default: the app's own)")
     p.add_argument("--data", type=Path, help="CLI JSON schedule, used instead of --db")
     p.add_argument("--start", help="YYYY-MM-DD, default today")
     p.add_argument("--days", type=int, default=7)

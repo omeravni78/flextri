@@ -10,10 +10,21 @@ athlete's real timeline, and adapt it every day from what they actually did.
    RPE, fatigue, soreness. Upcoming workouts adapt (`adaptation.py`).
 3. **Closing ceremony** (`flextri finish`): summary of the block (`ceremony.py`).
 
-## Run the app
+## Install the app (no Python needed)
+Download flexTri for Windows, macOS or Linux from the
+[Releases page](https://github.com/omeravni78/flextri/releases) and follow [packaging/INSTALL.md](packaging/INSTALL.md).
+Each release is built by `.github/workflows/app.yml` with PyInstaller (`packaging/flextri.spec`); push a tag such
+as `v0.2.0` (after bumping `__version__`) to publish one. Pull requests that touch the app build all four downloads
+as workflow artifacts, so they can be tried before merging.
+
+Locally: `pip install -e ".[garmin,app,build]"`, then `python packaging/make_icons.py` and
+`pyinstaller packaging/flextri.spec --noconfirm`; `dist/flexTri/flexTri --self-test` checks the result.
+
+## Run from a checkout
+`flextri-app` (or `python -m flextri.launcher`) starts the app, opens the browser and adds a tray icon.
 On Windows, double-click `run-windows.bat`. The first run creates a `.venv` folder and installs flexTri
 (Python 3.11+ from python.org is needed), then it opens http://127.0.0.1:8000 in your browser.
-Close the window to stop the app.
+Close the window, or press Quit in the app, to stop it.
 
 Or by hand, in PowerShell:
 ```
@@ -47,12 +58,15 @@ uvicorn flextri.web.api:app --reload   # API docs at http://127.0.0.1:8000/docs
 | `POST /api/checkins` | Daily check-in (today or up to 2 days back) |
 | `GET /api/summary` | Closing ceremony numbers |
 
-Data is one row in a local SQLite file (`FLEXTRI_DB`, default `flextri.db`); one athlete per install for now.
+Data is one row in a local SQLite file, one athlete per install for now. It lives in the per-user data folder
+(`%LOCALAPPDATA%\flexTri`, `~/Library/Application Support/flexTri`, `~/.local/share/flextri`) together with the
+Garmin login tokens; `FLEXTRI_HOME` moves that folder, `FLEXTRI_DB` and `GARMINTOKENS` still override single paths.
+On first start an older `flextri.db` in the current folder and tokens in `~/.garminconnect` are copied over.
 
 ## Try the CLI
 ```
 pip install -e ".[dev]"
-flextri onboard --template plans/olympic_8week_triathlete.json --name omer --start 2026-10-05 --race 2026-11-28 --days tue,wed,thu,sat,sun
+flextri onboard --template src/flextri/data/plans/olympic_8week_triathlete.json --name omer --start 2026-10-05 --race 2026-11-28 --days tue,wed,thu,sat,sun
 flextri today --date 2026-10-07
 flextri checkin --date 2026-10-07 --workout 2 --rpe 9 --fatigue 4
 flextri finish
@@ -60,7 +74,7 @@ pytest
 ```
 
 ## Plans
-Plans in `plans/` are offered in the setup wizard. `plans/olympic_8week_triathlete.json` is Marilyn Chychota's free
+Plans in `src/flextri/data/plans/` are offered in the setup wizard. `olympic_8week_triathlete.json` is Marilyn Chychota's free
 [8-week Olympic plan](https://www.triathlete.com/training/8-week-triathlon-training-plan-olympic-distance/) from
 Triathlete.com, with swims in meters.
 
@@ -73,4 +87,4 @@ A plan week can be written two ways:
   race day and `pre_race` sessions the day before.
 - `"days"`: fixed weekdays (`"0"` = Monday). Sessions move only when that day isn't a training day.
 
-`examples/placeholder_plan.json` is a generic 4-week stand-in with fixed days, not real coaching content.
+`src/flextri/data/examples/placeholder_plan.json` is a generic 4-week stand-in with fixed days, not real coaching content.

@@ -1,0 +1,104 @@
+# Builds the flexTri desktop app for Windows, macOS and Linux, and tests each build with --self-test.
+# - Pull requests that touch the app or its packaging: build and keep the downloads as run artifacts.
+# - A version tag (git tag v0.2.0 && git push origin v0.2.0): build and publish a GitHub Release.
+name: Desktop app
+
+on:
+  pull_request:
+    paths: ["src/**", "packaging/**", "pyproject.toml", ".github/workflows/app.yml"]
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, name: windows-setup, ext: exe }
+          - { os: macos-14, name: macos-apple-silicon, ext: dmg }
+          - { os: macos-15-intel, name: macos-intel, ext: dmg }
+          - { os: ubuntu-22.04, name: linux-x86_64, ext: AppImage }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: python -m pip install ".[dev,garmin,app,build]"
+      - name: Tests
+        run: python -m pytest -q
+      - name: Version
+        id: v
+        run: echo "version=$(python -c 'import flextri; print(flextri.__version__)')" >> "$GITHUB_OUTPUT"
+      - name: Bundle with PyInstaller
+        run: |
+          python packaging/make_icons.py
+          pyinstaller packaging/flextri.spec --noconfirm
+
+      - name: Self-test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $p = Start-Process dist\flexTri\flexTri.exe -ArgumentList '--self-test' -Wait -PassThru
+          Get-Content "$env:LOCALAPPDATA\flexTri\logs\flextri.log" -Tail 5 -ErrorAction SilentlyContinue
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - name: Installer (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) { choco install innosetup --no-progress -y }
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DAppVersion=${{ steps.v.outputs.version }}" packaging\windows\flextri.iss
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Move-Item "dist\flexTri-${{ steps.v.outputs.version }}-windows-setup.exe" "dist\flexTri-${{ steps.v.outputs.version }}-${{ matrix.name }}.exe"
+
+      - name: Self-test and disk image (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          dist/flexTri.app/Contents/MacOS/flexTri --self-test
+          packaging/macos/build_dmg.sh "dist/flexTri-${{ steps.v.outputs.version }}-${{ matrix.name }}.dmg"
+
+      - name: Self-test and AppImage (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          dist/flexTri/flexTri --self-test
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -sSLo "$RUNNER_TEMP/appimagetool.AppImage" https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x "$RUNNER_TEMP/appimagetool.AppImage"
+          printf '#!/bin/sh\nAPPIMAGE_EXTRACT_AND_RUN=1 exec "%s" "$@"\n' "$RUNNER_TEMP/appimagetool.AppImage" > "$RUNNER_TEMP/bin/appimagetool"
+          chmod +x "$RUNNER_TEMP/bin/appimagetool"
+          PATH="$RUNNER_TEMP/bin:$PATH" packaging/linux/build_appimage.sh "dist/flexTri-${{ steps.v.outputs.version }}-${{ matrix.name }}.AppImage"
+          APPIMAGE_EXTRACT_AND_RUN=1 "dist/flexTri-${{ steps.v.outputs.version }}-${{ matrix.name }}.AppImage" --self-test
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flexTri-${{ matrix.name }}
+          path: dist/flexTri-*.${{ matrix.ext }}
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" out/* --title "flexTri $GITHUB_REF_NAME" --notes-file packaging/INSTALL.md

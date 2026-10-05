@@ -1,10 +1,9 @@
-from pathlib import Path
-
 import pytest
 
+from flextri.paths import bundled
 from flextri.storage import load_template
 
-EXAMPLE = Path(__file__).parent.parent / "examples" / "placeholder_plan.json"
+EXAMPLE = bundled("examples", "placeholder_plan.json")
 
 
 @pytest.fixture
@@ -15,3 +14,9 @@ def template():
 @pytest.fixture
 def example_path():
     return EXAMPLE
+
+
+@pytest.fixture(autouse=True)
+def _private_data_dir(tmp_path, monkeypatch):
+    """Keep every test out of the real per-user data folder."""
+    monkeypatch.setenv("FLEXTRI_HOME", str(tmp_path / "flextri-home"))
