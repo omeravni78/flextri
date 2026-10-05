@@ -233,8 +233,10 @@ def summary(store: SqliteStore = Depends(get_store)):
 
 
 from .ui import router as ui_router  # noqa: E402  (ui imports helpers defined above)
+from .garmin_ui import router as garmin_router  # noqa: E402  (garmin_ui needs get_store and get_today)
 
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 app.include_router(ui_router)
+app.include_router(garmin_router)
 app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")

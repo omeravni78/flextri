@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Garmin Connect · flexTri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&amp;display=swap">
+<style>
+:root {
+  --ground: #F5F4EF; --card: #FFFFFF; --ink: #15171C; --quiet: #5A5F6B; --line: #E4E2DA; --rule: #EEECE5;
+  --accent: #1F5FD6; --accent-ink: #FFFFFF; --ok: #15803D; --ok-tint: #E3F3E8; --danger: #B91C1C; --danger-tint: #FBE9E7;
+  --field: #D6D3C9;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #131417; --card: #1D1F24; --ink: #F1F0EA; --quiet: #A4A8B2; --line: #2E3138; --rule: #2A2D33;
+          --accent: #6B9BF2; --accent-ink: #0E1220; --ok: #5CC283; --ok-tint: #1B3324; --danger: #F08A80; --danger-tint: #3A1E1C;
+          --field: #3A3D45; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 15px/1.45 Archivo, system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 480px; margin: 0 auto; padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 16px; }
+.top { display: flex; align-items: center; gap: 8px; }
+.top a { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--ink); margin-left: -12px; }
+.top h1 { font-size: 18px; font-weight: 800; margin: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px 18px; }
+.status { display: flex; align-items: center; gap: 14px; }
+.badge { width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; flex: none; background: var(--rule); color: var(--quiet); }
+.badge.ok { background: var(--ok-tint); color: var(--ok); }
+.strong { font-size: 16px; font-weight: 700; }
+.quiet { font-size: 14px; color: var(--quiet); }
+.small { font-size: 13px; color: var(--quiet); }
+label { display: block; font-weight: 700; margin: 12px 0 6px; }
+input { width: 100%; height: 48px; font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--field); border-radius: 12px; padding: 0 14px; }
+input:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; font-weight: 600; height: 48px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--field); background: var(--card); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.wide { width: 100%; }
+button.link { border: 0; background: transparent; height: 44px; }
+button.danger { color: var(--danger); }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.action { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 12px 0; }
+.action + .action { border-top: 1px solid var(--rule); }
+.action div { flex: 1; }
+.banner { border-radius: 14px; padding: 12px 16px; }
+.banner.error { background: var(--danger-tint); }
+.banner.done { background: var(--ok-tint); }
+.banner ul { margin: 8px 0 0; padding-left: 18px; }
+.foot { align-self: center; }
+form { margin: 0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <a href="/" aria-label="Back">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <h1>Garmin Connect</h1>
+  </div>
+
+  {% if error %}<div class="banner error" role="alert">{{ error }}</div>{% endif %}
+  {% if result %}
+  <div class="banner done" role="status">
+    <div class="strong">{{ result.title }}</div>
+    {% if result.lines %}<ul>{% for line in result.lines %}<li>{{ line }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if connected %}
+  <div class="card status">
+    <div class="badge ok"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></div>
+    <div><div class="strong">Connected</div><div class="quiet">flexTri keeps Garmin's login, never your password</div></div>
+  </div>
+
+  {% if cleanup %}
+  <div class="card stack">
+    <div class="strong">Clean up watch</div>
+    {% if cleanup.old %}
+    <div class="quiet">{{ cleanup.old }} old workout{{ 's' if cleanup.old != 1 }} only had dates in the past and can go.
+      flexTri keeps {{ cleanup.upcoming }} scheduled from today on and {{ cleanup.unscheduled }} you saved yourself.
+      Your recorded activities aren't touched.</div>
+    {% if cleanup.examples %}<ul class="small">{% for name in cleanup.examples %}<li>{{ name }}</li>{% endfor %}</ul>{% endif %}
+    <div class="row">
+      <form method="post" action="/garmin/cleanup/confirm"><button class="primary" type="submit">Delete {{ cleanup.old }} old workout{{ 's' if cleanup.old != 1 }}</button></form>
+      <form method="get" action="/garmin"><button type="submit">Keep them</button></form>
+    </div>
+    {% else %}
+    <div class="quiet">Nothing old to delete. Your watch has {{ cleanup.upcoming }} upcoming and {{ cleanup.unscheduled }} saved workouts.</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="card" style="padding-top: 4px; padding-bottom: 4px">
+    <form class="action" method="post" action="/garmin/send">
+      <div><div class="strong">Send this week to watch</div><div class="small">The next {{ send_days }} days. Ones already there are skipped.</div></div>
+      <button class="primary" type="submit">Send</button>
+    </form>
+    <form class="action" method="post" action="/garmin/cleanup">
+      <div><div class="strong">Clean up watch</div><div class="small">Find old workouts filling up its storage. You confirm before anything is deleted.</div></div>
+      <button type="submit">Check</button>
+    </form>
+  </div>
+
+  <form class="foot" method="post" action="/garmin/disconnect" onsubmit="return confirm('Disconnect Garmin? flexTri deletes its Garmin login. Workouts already on your watch stay.')">
+    <button class="link danger" type="submit">Disconnect Garmin</button>
+  </form>
+
+  {% elif waiting_for_code %}
+  <form class="card stack" method="post" action="/garmin/code">
+    <div><div class="strong">Enter your Garmin code</div><div class="quiet">Garmin sent a verification code to your email or phone.</div></div>
+    <div>
+      <label for="code">Code</label>
+      <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" autofocus required>
+    </div>
+    <button class="primary wide" type="submit">Connect</button>
+  </form>
+  <form class="foot" method="post" action="/garmin/cancel"><button class="link" type="submit">Start over</button></form>
+
+  {% else %}
+  <div class="card status">
+    <div class="badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg></div>
+    <div><div class="strong">Not connected</div><div class="quiet">Connect once to send workouts to your watch</div></div>
+  </div>
+  <form class="card" method="post" action="/garmin/connect">
+    <label for="email" style="margin-top: 0">Garmin email</label>
+    <input id="email" name="email" type="email" autocomplete="username" value="{{ email or '' }}" required>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <p class="small">flexTri uses your password once to log in and never saves it. It keeps only Garmin's login on this computer, and Disconnect deletes it.</p>
+    <button class="primary wide" type="submit">Connect Garmin</button>
+  </form>
+  {% endif %}
+</main>
+</body>
+</html>

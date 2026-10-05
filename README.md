@@ -27,6 +27,12 @@ New athletes land on the 5-step setup wizard. After that, the home screen is the
 ease, swap, move or rest a session, check in, or log an extra session. "Edit my setup" reopens the wizard and shows
 what will change before saving. On a phone the calendar shows one week as a list with a 28-day strip on top.
 
+## Send workouts to Garmin
+Open **Garmin** in the header (or press "Send this week to Garmin" on the calendar), log in with your Garmin
+Connect email and password, and enter the code if Garmin sends one. flexTri keeps only Garmin's login tokens,
+never your password. "Send this week to watch" uploads the next 7 days of planned sessions; sync your watch to
+get them. It needs the `garmin` extra: `pip install -e ".[garmin]"` (`run-windows.bat` installs it).
+
 ## Web API (behind the wizard and calendar screens)
 ```
 uvicorn flextri.web.api:app --reload   # API docs at http://127.0.0.1:8000/docs

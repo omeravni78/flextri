@@ -12,7 +12,7 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 echo Checking dependencies...
-".venv\Scripts\python.exe" -m pip install --quiet --disable-pip-version-check -e ".[dev]" || goto :failed
+".venv\Scripts\python.exe" -m pip install --quiet --disable-pip-version-check -e ".[dev,garmin]" || goto :failed
 
 echo Starting flexTri at http://127.0.0.1:8000  (close this window to stop it)
 start "" http://127.0.0.1:8000

@@ -103,3 +103,36 @@ def test_wizard_day_choices_reach_the_plan(client):
 def test_preview_warns_when_too_few_days(client):
     form = {**FORM, "plan": "olympic_8week_triathlete", "available_days": ["0", "2", "5"]}
     assert "leaves out the easier ones" in client.post("/ui/preview", data=form).text
+
+
+def test_calendar_sends_this_week_to_garmin(client):
+    from flextri.web import garmin_ui
+
+    class FakeGarmin:
+        uploaded, scheduled = [], []
+
+        def get_scheduled_workouts(self, year, month):
+            return {"calendarItems": []}
+
+        def upload_workout(self, payload):
+            self.uploaded.append(payload)
+            return {"workoutId": len(self.uploaded)}
+
+        def schedule_workout(self, workout_id, date_str):
+            self.scheduled.append((workout_id, date_str))
+
+    fake = FakeGarmin()
+
+    class Connected:
+        connected, waiting_for_code = True, False
+
+        def client(self):
+            return fake
+
+    client.post("/setup", data={**FORM, "plan": "olympic_8week_triathlete"})
+    cal = client.get("/").text
+    assert 'href="/garmin"' in cal and 'action="/garmin/send"' in cal
+    api.app.dependency_overrides[garmin_ui.get_account] = lambda: Connected()
+    page = client.post("/garmin/send").text
+    assert fake.uploaded and "Sync your watch" in page
+    assert all(day >= TODAY.isoformat() for _, day in fake.scheduled)
