@@ -1,747 +1,679 @@
 {
   "name": "Triathlete.com 8-week Olympic plan (Marilyn Chychota)",
-  "notes": "Swim totals converted from yards to meters (x0.9144, rounded to 50 m). Set lengths inside each swim (e.g. 10x50) are pool lengths: swim them in meters.",
+  "notes": "Day-free: each week lists its sessions with a slot. The athlete picks the long ride, long run, brick and swim days; other sessions are spread over their training days. Swim totals converted from yards to meters (x0.9144, rounded to 50 m). Set lengths inside each swim (e.g. 10x50) are pool lengths: swim them in meters.",
   "source": "https://www.triathlete.com/training/8-week-triathlon-training-plan-olympic-distance/",
   "weeks": [
     {
       "phase": "base",
-      "days": {
-        "0": [
-          {
-            "discipline": "swim",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "900 m: drills, descending pace, paddle work",
-            "key": false
-          },
-          {
-            "discipline": "strength",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "core routine",
-            "key": false
-          }
-        ],
-        "1": [
-          {
-            "discipline": "bike",
-            "duration_min": 45,
-            "intensity": 2,
-            "description": "single-leg drills, high-cadence progression 90-110 rpm, easy gear",
-            "key": false
-          },
-          {
-            "discipline": "run",
-            "duration_min": 30,
-            "intensity": 2,
-            "description": "easy run + drills (butt kicks, high knees, shuffles)",
-            "key": false
-          }
-        ],
-        "2": [
-          {
-            "discipline": "run",
-            "duration_min": 40,
-            "intensity": 2,
-            "description": "easy with 8x30s hill strides",
-            "key": false
-          },
-          {
-            "discipline": "strength",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "core routine",
-            "key": false
-          }
-        ],
-        "3": [
-          {
-            "discipline": "strength",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "core routine",
-            "key": false
-          },
-          {
-            "discipline": "run",
-            "duration_min": 45,
-            "intensity": 3,
-            "description": "6x90s uphill efforts",
-            "key": false
-          }
-        ],
-        "4": [
-          {
-            "discipline": "swim",
-            "duration_min": 35,
-            "intensity": 2,
-            "description": "1650 m: 4x150 pull/drill, descending/ascending 100s, catch-up drill",
-            "key": false
-          }
-        ],
-        "5": [
-          {
-            "discipline": "bike",
-            "duration_min": 120,
-            "intensity": 2,
-            "description": "aerobic easy long ride",
-            "key": true
-          }
-        ],
-        "6": [
-          {
-            "discipline": "run",
-            "duration_min": 50,
-            "intensity": 2,
-            "description": "easy long run",
-            "key": true
-          }
-        ]
-      }
+      "sessions": [
+        {
+          "discipline": "swim",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "900 m: drills, descending pace, paddle work",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "strength",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "core routine",
+          "key": false,
+          "slot": "strength"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 45,
+          "intensity": 2,
+          "description": "single-leg drills, high-cadence progression 90-110 rpm, easy gear",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 30,
+          "intensity": 2,
+          "description": "easy run + drills (butt kicks, high knees, shuffles)",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 40,
+          "intensity": 2,
+          "description": "easy with 8x30s hill strides",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "strength",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "core routine",
+          "key": false,
+          "slot": "strength"
+        },
+        {
+          "discipline": "strength",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "core routine",
+          "key": false,
+          "slot": "strength"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 45,
+          "intensity": 3,
+          "description": "6x90s uphill efforts",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 35,
+          "intensity": 2,
+          "description": "1650 m: 4x150 pull/drill, descending/ascending 100s, catch-up drill",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 120,
+          "intensity": 2,
+          "description": "aerobic easy long ride",
+          "key": true,
+          "slot": "long_ride"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 50,
+          "intensity": 2,
+          "description": "easy long run",
+          "key": true,
+          "slot": "long_run"
+        }
+      ]
     },
     {
       "phase": "base",
-      "days": {
-        "0": [
-          {
-            "discipline": "swim",
-            "duration_min": 40,
-            "intensity": 2,
-            "description": "1750 m: single-arm w/ fins, pull, scull, fingertip drag, kick fast",
-            "key": false
-          },
-          {
-            "discipline": "strength",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "core routine",
-            "key": false
-          }
-        ],
-        "1": [
-          {
-            "discipline": "bike",
-            "duration_min": 60,
-            "intensity": 2,
-            "description": "single-leg intervals, cadence 100-120 rpm x2",
-            "key": false
-          },
-          {
-            "discipline": "run",
-            "duration_min": 45,
-            "intensity": 2,
-            "description": "easy + drills, 6x20s strides",
-            "key": false
-          }
-        ],
-        "2": [
-          {
-            "discipline": "swim",
-            "duration_min": 40,
-            "intensity": 3,
-            "description": "1900 m: 3x200 swim/pull/swim, 8x50 drill/build/fast, 7x100 steady-strong",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "single-leg, high cadence, big gear 95->55 rpm",
-            "key": false
-          }
-        ],
-        "3": [
-          {
-            "discipline": "strength",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "core routine",
-            "key": false
-          },
-          {
-            "discipline": "run",
-            "duration_min": 45,
-            "intensity": 3,
-            "description": "uphill/downhill cadence work",
-            "key": false
-          }
-        ],
-        "4": [
-          {
-            "discipline": "swim",
-            "duration_min": 45,
-            "intensity": 3,
-            "description": "2100 m: 100s with drills, 8x200 pull, kick fast",
-            "key": false
-          }
-        ],
-        "5": [
-          {
-            "discipline": "bike",
-            "duration_min": 90,
-            "intensity": 3,
-            "description": "big gear 60-65 rpm alternating with 90+ rpm spin",
-            "key": true
-          },
-          {
-            "discipline": "run",
-            "duration_min": 30,
-            "intensity": 2,
-            "description": "easy run",
-            "key": false
-          }
-        ],
-        "6": [
-          {
-            "discipline": "run",
-            "duration_min": 50,
-            "intensity": 4,
-            "description": "ladder warm-up, 16 min of 1 min tempo / 1 min VO2",
-            "key": true
-          }
-        ]
-      }
+      "sessions": [
+        {
+          "discipline": "swim",
+          "duration_min": 40,
+          "intensity": 2,
+          "description": "1750 m: single-arm w/ fins, pull, scull, fingertip drag, kick fast",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "strength",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "core routine",
+          "key": false,
+          "slot": "strength"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 60,
+          "intensity": 2,
+          "description": "single-leg intervals, cadence 100-120 rpm x2",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 45,
+          "intensity": 2,
+          "description": "easy + drills, 6x20s strides",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 40,
+          "intensity": 3,
+          "description": "1900 m: 3x200 swim/pull/swim, 8x50 drill/build/fast, 7x100 steady-strong",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "single-leg, high cadence, big gear 95->55 rpm",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "strength",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "core routine",
+          "key": false,
+          "slot": "strength"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 45,
+          "intensity": 3,
+          "description": "uphill/downhill cadence work",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 45,
+          "intensity": 3,
+          "description": "2100 m: 100s with drills, 8x200 pull, kick fast",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 90,
+          "intensity": 3,
+          "description": "big gear 60-65 rpm alternating with 90+ rpm spin",
+          "key": true,
+          "slot": "long_ride"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 30,
+          "intensity": 2,
+          "description": "easy run",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 50,
+          "intensity": 4,
+          "description": "ladder warm-up, 16 min of 1 min tempo / 1 min VO2",
+          "key": true,
+          "slot": "long_run"
+        }
+      ]
     },
     {
       "phase": "build",
-      "days": {
-        "0": [
-          {
-            "discipline": "swim",
-            "duration_min": 40,
-            "intensity": 3,
-            "description": "1900 m: kick/pull, 10x50 steady, 10x50 strong, 10x50 at 80-85%",
-            "key": false
-          },
-          {
-            "discipline": "strength",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "core routine",
-            "key": false
-          }
-        ],
-        "1": [
-          {
-            "discipline": "brick",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "bike 40 min (12x15s fast/45s easy) + run 20 min easy off the bike",
-            "key": true
-          }
-        ],
-        "2": [
-          {
-            "discipline": "swim",
-            "duration_min": 50,
-            "intensity": 4,
-            "description": "2300 m: 500 wu, 20x25 fast, 500 pull, 20x25 fast, 500 cd",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "3x16 min: 4 min tempo at varying cadence/position",
-            "key": false
-          }
-        ],
-        "3": [
-          {
-            "discipline": "strength",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "core routine",
-            "key": false
-          },
-          {
-            "discipline": "run",
-            "duration_min": 45,
-            "intensity": 3,
-            "description": "6x90s uphill efforts",
-            "key": false
-          }
-        ],
-        "4": [
-          {
-            "discipline": "swim",
-            "duration_min": 45,
-            "intensity": 3,
-            "description": "2100 m: descending 100s, 2x1000 with second faster",
-            "key": false
-          }
-        ],
-        "5": [
-          {
-            "discipline": "bike",
-            "duration_min": 90,
-            "intensity": 3,
-            "description": "4x9 min big gear 55-65 rpm + 3x10 min tempo",
-            "key": true
-          },
-          {
-            "discipline": "run",
-            "duration_min": 45,
-            "intensity": 2,
-            "description": "easy + strides and drills",
-            "key": false
-          }
-        ],
-        "6": [
-          {
-            "discipline": "run",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "4x(2 min tempo/1 min easy x2)",
-            "key": true
-          }
-        ]
-      }
+      "sessions": [
+        {
+          "discipline": "swim",
+          "duration_min": 40,
+          "intensity": 3,
+          "description": "1900 m: kick/pull, 10x50 steady, 10x50 strong, 10x50 at 80-85%",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "strength",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "core routine",
+          "key": false,
+          "slot": "strength"
+        },
+        {
+          "discipline": "brick",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "bike 40 min (12x15s fast/45s easy) + run 20 min easy off the bike",
+          "key": true,
+          "slot": "brick"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 50,
+          "intensity": 4,
+          "description": "2300 m: 500 wu, 20x25 fast, 500 pull, 20x25 fast, 500 cd",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "3x16 min: 4 min tempo at varying cadence/position",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "strength",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "core routine",
+          "key": false,
+          "slot": "strength"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 45,
+          "intensity": 3,
+          "description": "6x90s uphill efforts",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 45,
+          "intensity": 3,
+          "description": "2100 m: descending 100s, 2x1000 with second faster",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 90,
+          "intensity": 3,
+          "description": "4x9 min big gear 55-65 rpm + 3x10 min tempo",
+          "key": true,
+          "slot": "long_ride"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 45,
+          "intensity": 2,
+          "description": "easy + strides and drills",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "4x(2 min tempo/1 min easy x2)",
+          "key": true,
+          "slot": "long_run"
+        }
+      ]
     },
     {
       "phase": "build",
-      "days": {
-        "0": [
-          {
-            "discipline": "swim",
-            "duration_min": 40,
-            "intensity": 3,
-            "description": "1850 m: descending 100s, head-up drill, 5x100 race effort, 5x100 above race effort",
-            "key": false
-          },
-          {
-            "discipline": "strength",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "core routine",
-            "key": false
-          }
-        ],
-        "1": [
-          {
-            "discipline": "brick",
-            "duration_min": 90,
-            "intensity": 4,
-            "description": "bike 60 min (15x1 min power/1 min easy) + run 30 min with strides",
-            "key": true
-          }
-        ],
-        "2": [
-          {
-            "discipline": "swim",
-            "duration_min": 50,
-            "intensity": 3,
-            "description": "2300 m: 100 swim/drill/kick, 10x200 with gear",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 90,
-            "intensity": 3,
-            "description": "3x10 min aero position 85-95 rpm",
-            "key": false
-          }
-        ],
-        "3": [
-          {
-            "discipline": "strength",
-            "duration_min": 20,
-            "intensity": 2,
-            "description": "core routine",
-            "key": false
-          },
-          {
-            "discipline": "run",
-            "duration_min": 60,
-            "intensity": 4,
-            "description": "track: drills, 10x200 high cadence",
-            "key": false
-          }
-        ],
-        "4": [
-          {
-            "discipline": "swim",
-            "duration_min": 40,
-            "intensity": 3,
-            "description": "1850 m: 2 rounds with/without fins, fast/easy mixes",
-            "key": false
-          }
-        ],
-        "5": [
-          {
-            "discipline": "bike",
-            "duration_min": 120,
-            "intensity": 3,
-            "description": "5x15 min tempo in race position 90-95 rpm",
-            "key": true
-          }
-        ],
-        "6": [
-          {
-            "discipline": "run",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "3x10 min relaxed-to-tempo progression, strides",
-            "key": true
-          }
-        ]
-      }
+      "sessions": [
+        {
+          "discipline": "swim",
+          "duration_min": 40,
+          "intensity": 3,
+          "description": "1850 m: descending 100s, head-up drill, 5x100 race effort, 5x100 above race effort",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "strength",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "core routine",
+          "key": false,
+          "slot": "strength"
+        },
+        {
+          "discipline": "brick",
+          "duration_min": 90,
+          "intensity": 4,
+          "description": "bike 60 min (15x1 min power/1 min easy) + run 30 min with strides",
+          "key": true,
+          "slot": "brick"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 50,
+          "intensity": 3,
+          "description": "2300 m: 100 swim/drill/kick, 10x200 with gear",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 90,
+          "intensity": 3,
+          "description": "3x10 min aero position 85-95 rpm",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "strength",
+          "duration_min": 20,
+          "intensity": 2,
+          "description": "core routine",
+          "key": false,
+          "slot": "strength"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 60,
+          "intensity": 4,
+          "description": "track: drills, 10x200 high cadence",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 40,
+          "intensity": 3,
+          "description": "1850 m: 2 rounds with/without fins, fast/easy mixes",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 120,
+          "intensity": 3,
+          "description": "5x15 min tempo in race position 90-95 rpm",
+          "key": true,
+          "slot": "long_ride"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "3x10 min relaxed-to-tempo progression, strides",
+          "key": true,
+          "slot": "long_run"
+        }
+      ]
     },
     {
       "phase": "build",
-      "days": {
-        "0": [
-          {
-            "discipline": "swim",
-            "duration_min": 30,
-            "intensity": 4,
-            "description": "1300 m: 400 time trial, 3x200 pull",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 60,
-            "intensity": 1,
-            "description": "easy ride",
-            "key": false
-          }
-        ],
-        "1": [
-          {
-            "discipline": "brick",
-            "duration_min": 100,
-            "intensity": 4,
-            "description": "bike 60 min (5x30s/1min/2min hard) + run 40 min (10 min race pace, 10x1 min above race pace)",
-            "key": true
-          }
-        ],
-        "2": [
-          {
-            "discipline": "swim",
-            "duration_min": 50,
-            "intensity": 3,
-            "description": "2400 m: descending 50s, 4x(100 fast/300 race/100 easy) pull",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "6x5 min big gear 50-60 rpm",
-            "key": false
-          }
-        ],
-        "3": [
-          {
-            "discipline": "rest",
-            "duration_min": 0,
-            "intensity": 1,
-            "description": "rest day",
-            "key": false
-          }
-        ],
-        "4": [
-          {
-            "discipline": "swim",
-            "duration_min": 50,
-            "intensity": 3,
-            "description": "2300 m: 40x50 fast/steady combinations",
-            "key": false
-          },
-          {
-            "discipline": "run",
-            "duration_min": 50,
-            "intensity": 4,
-            "description": "track: 3x600 at 80%, 6x200 at 85-90%",
-            "key": false
-          }
-        ],
-        "5": [
-          {
-            "discipline": "bike",
-            "duration_min": 150,
-            "intensity": 3,
-            "description": "2x(3x15 min TT tempo at 80-90 rpm)",
-            "key": true
-          }
-        ],
-        "6": [
-          {
-            "discipline": "run",
-            "duration_min": 70,
-            "intensity": 4,
-            "description": "10x3 min tempo-to-threshold, 90s easy",
-            "key": true
-          }
-        ]
-      }
+      "sessions": [
+        {
+          "discipline": "swim",
+          "duration_min": 30,
+          "intensity": 4,
+          "description": "1300 m: 400 time trial, 3x200 pull",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 60,
+          "intensity": 1,
+          "description": "easy ride",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "brick",
+          "duration_min": 100,
+          "intensity": 4,
+          "description": "bike 60 min (5x30s/1min/2min hard) + run 40 min (10 min race pace, 10x1 min above race pace)",
+          "key": true,
+          "slot": "brick"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 50,
+          "intensity": 3,
+          "description": "2400 m: descending 50s, 4x(100 fast/300 race/100 easy) pull",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "6x5 min big gear 50-60 rpm",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 50,
+          "intensity": 3,
+          "description": "2300 m: 40x50 fast/steady combinations",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 50,
+          "intensity": 4,
+          "description": "track: 3x600 at 80%, 6x200 at 85-90%",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 150,
+          "intensity": 3,
+          "description": "2x(3x15 min TT tempo at 80-90 rpm)",
+          "key": true,
+          "slot": "long_ride"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 70,
+          "intensity": 4,
+          "description": "10x3 min tempo-to-threshold, 90s easy",
+          "key": true,
+          "slot": "long_run"
+        }
+      ]
     },
     {
       "phase": "peak",
-      "days": {
-        "0": [
-          {
-            "discipline": "swim",
-            "duration_min": 65,
-            "intensity": 3,
-            "description": "3000 m: 8x100 steady, 8x100 race, 8x100 above race",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "10x1 min 105 rpm + 4x5 min 50-60 rpm",
-            "key": false
-          }
-        ],
-        "1": [
-          {
-            "discipline": "brick",
-            "duration_min": 120,
-            "intensity": 4,
-            "description": "bike 90 min (2x10 min tempo, 8x1 min hard) + run 30 min (5x2 min race effort)",
-            "key": true
-          }
-        ],
-        "2": [
-          {
-            "discipline": "swim",
-            "duration_min": 40,
-            "intensity": 2,
-            "description": "1850 m: continuous, relaxed",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "30 min progressive big gear in race position",
-            "key": false
-          }
-        ],
-        "3": [
-          {
-            "discipline": "rest",
-            "duration_min": 0,
-            "intensity": 1,
-            "description": "rest day",
-            "key": false
-          }
-        ],
-        "4": [
-          {
-            "discipline": "swim",
-            "duration_min": 35,
-            "intensity": 3,
-            "description": "1700 m: paddle skill work, sprint/steady combos",
-            "key": false
-          },
-          {
-            "discipline": "run",
-            "duration_min": 20,
-            "intensity": 4,
-            "description": "threshold intervals",
-            "key": false
-          }
-        ],
-        "5": [
-          {
-            "discipline": "bike",
-            "duration_min": 120,
-            "intensity": 4,
-            "description": "3 rounds of 2x6 min TT efforts",
-            "key": true
-          }
-        ],
-        "6": [
-          {
-            "discipline": "run",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "thirds: easy, tempo, tempo-to-threshold",
-            "key": true
-          }
-        ]
-      }
+      "sessions": [
+        {
+          "discipline": "swim",
+          "duration_min": 65,
+          "intensity": 3,
+          "description": "3000 m: 8x100 steady, 8x100 race, 8x100 above race",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "10x1 min 105 rpm + 4x5 min 50-60 rpm",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "brick",
+          "duration_min": 120,
+          "intensity": 4,
+          "description": "bike 90 min (2x10 min tempo, 8x1 min hard) + run 30 min (5x2 min race effort)",
+          "key": true,
+          "slot": "brick"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 40,
+          "intensity": 2,
+          "description": "1850 m: continuous, relaxed",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "30 min progressive big gear in race position",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 35,
+          "intensity": 3,
+          "description": "1700 m: paddle skill work, sprint/steady combos",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 20,
+          "intensity": 4,
+          "description": "threshold intervals",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 120,
+          "intensity": 4,
+          "description": "3 rounds of 2x6 min TT efforts",
+          "key": true,
+          "slot": "long_ride"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "thirds: easy, tempo, tempo-to-threshold",
+          "key": true,
+          "slot": "long_run"
+        }
+      ]
     },
     {
       "phase": "peak",
-      "days": {
-        "0": [
-          {
-            "discipline": "swim",
-            "duration_min": 60,
-            "intensity": 3,
-            "description": "2750 m: 3x200 swim/pull/kick, 15x100 relaxed/steady/faster, 25x25 fast",
-            "key": false
-          }
-        ],
-        "1": [
-          {
-            "discipline": "brick",
-            "duration_min": 120,
-            "intensity": 4,
-            "description": "bike 90 min (8x3 min TT threshold) + run 30 min (10 easy/10 race pace/10 easy)",
-            "key": true
-          }
-        ],
-        "2": [
-          {
-            "discipline": "swim",
-            "duration_min": 45,
-            "intensity": 2,
-            "description": "2000 m: drills: single-arm, pull, scull, kick",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 90,
-            "intensity": 3,
-            "description": "3x8 min big gear on 2-3% incline",
-            "key": false
-          }
-        ],
-        "3": [
-          {
-            "discipline": "rest",
-            "duration_min": 0,
-            "intensity": 1,
-            "description": "rest day",
-            "key": false
-          }
-        ],
-        "4": [
-          {
-            "discipline": "swim",
-            "duration_min": 30,
-            "intensity": 3,
-            "description": "1350 m: descending 50s, fast 25s with fins",
-            "key": false
-          },
-          {
-            "discipline": "run",
-            "duration_min": 60,
-            "intensity": 4,
-            "description": "track pyramid around 10K/5K pace",
-            "key": true
-          }
-        ],
-        "5": [
-          {
-            "discipline": "bike",
-            "duration_min": 90,
-            "intensity": 4,
-            "description": "2x(3x4 min threshold in TT position)",
-            "key": true
-          },
-          {
-            "discipline": "run",
-            "duration_min": 30,
-            "intensity": 2,
-            "description": "easy run",
-            "key": false
-          }
-        ],
-        "6": [
-          {
-            "discipline": "run",
-            "duration_min": 45,
-            "intensity": 3,
-            "description": "race warm-up rehearsal, first 3 miles at race pace, 6 strides",
-            "key": false
-          }
-        ]
-      }
+      "sessions": [
+        {
+          "discipline": "swim",
+          "duration_min": 60,
+          "intensity": 3,
+          "description": "2750 m: 3x200 swim/pull/kick, 15x100 relaxed/steady/faster, 25x25 fast",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "brick",
+          "duration_min": 120,
+          "intensity": 4,
+          "description": "bike 90 min (8x3 min TT threshold) + run 30 min (10 easy/10 race pace/10 easy)",
+          "key": true,
+          "slot": "brick"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 45,
+          "intensity": 2,
+          "description": "2000 m: drills: single-arm, pull, scull, kick",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 90,
+          "intensity": 3,
+          "description": "3x8 min big gear on 2-3% incline",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 30,
+          "intensity": 3,
+          "description": "1350 m: descending 50s, fast 25s with fins",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 60,
+          "intensity": 4,
+          "description": "track pyramid around 10K/5K pace",
+          "key": true,
+          "slot": "run"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 90,
+          "intensity": 4,
+          "description": "2x(3x4 min threshold in TT position)",
+          "key": true,
+          "slot": "long_ride"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 30,
+          "intensity": 2,
+          "description": "easy run",
+          "key": false,
+          "slot": "run"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 45,
+          "intensity": 3,
+          "description": "race warm-up rehearsal, first 3 miles at race pace, 6 strides",
+          "key": false,
+          "slot": "long_run"
+        }
+      ]
     },
     {
       "phase": "taper",
-      "days": {
-        "0": [
-          {
-            "discipline": "swim",
-            "duration_min": 50,
-            "intensity": 3,
-            "description": "2400 m: descending 50s, 2x(8x100 at race pace)",
-            "key": false
-          }
-        ],
-        "1": [
-          {
-            "discipline": "brick",
-            "duration_min": 55,
-            "intensity": 3,
-            "description": "bike 45 min (3x2 min build, 5 min tempo) + run 10 min (3 min race pace, 5x30s fast)",
-            "key": true
-          }
-        ],
-        "2": [
-          {
-            "discipline": "swim",
-            "duration_min": 25,
-            "intensity": 2,
-            "description": "1100 m: 3x200 pull buoy, kick build",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 45,
-            "intensity": 1,
-            "description": "easy ride",
-            "key": false
-          }
-        ],
-        "3": [
-          {
-            "discipline": "rest",
-            "duration_min": 0,
-            "intensity": 1,
-            "description": "rest day (massage recommended)",
-            "key": false
-          }
-        ],
-        "4": [
-          {
-            "discipline": "run",
-            "duration_min": 10,
-            "intensity": 2,
-            "description": "pre-race: 4x30s strides",
-            "key": false
-          },
-          {
-            "discipline": "bike",
-            "duration_min": 15,
-            "intensity": 2,
-            "description": "pre-race: 5 min build, 4x30s faster",
-            "key": false
-          },
-          {
-            "discipline": "swim",
-            "duration_min": 5,
-            "intensity": 2,
-            "description": "pre-race: progressive 100, 2-3 race starts",
-            "key": false
-          }
-        ],
-        "5": [
-          {
-            "discipline": "run",
-            "duration_min": 0,
-            "intensity": 5,
-            "description": "RACE DAY: Olympic triathlon (1.5 km swim, 40 km bike, 10 km run)",
-            "key": true
-          }
-        ],
-        "6": [
-          {
-            "discipline": "rest",
-            "duration_min": 0,
-            "intensity": 1,
-            "description": "celebrate",
-            "key": false
-          }
-        ]
-      }
+      "sessions": [
+        {
+          "discipline": "swim",
+          "duration_min": 50,
+          "intensity": 3,
+          "description": "2400 m: descending 50s, 2x(8x100 at race pace)",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "brick",
+          "duration_min": 55,
+          "intensity": 3,
+          "description": "bike 45 min (3x2 min build, 5 min tempo) + run 10 min (3 min race pace, 5x30s fast)",
+          "key": true,
+          "slot": "brick"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 25,
+          "intensity": 2,
+          "description": "1100 m: 3x200 pull buoy, kick build",
+          "key": false,
+          "slot": "swim"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 45,
+          "intensity": 1,
+          "description": "easy ride",
+          "key": false,
+          "slot": "bike"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 10,
+          "intensity": 2,
+          "description": "pre-race: 4x30s strides",
+          "key": false,
+          "slot": "pre_race"
+        },
+        {
+          "discipline": "bike",
+          "duration_min": 15,
+          "intensity": 2,
+          "description": "pre-race: 5 min build, 4x30s faster",
+          "key": false,
+          "slot": "pre_race"
+        },
+        {
+          "discipline": "swim",
+          "duration_min": 5,
+          "intensity": 2,
+          "description": "pre-race: progressive 100, 2-3 race starts",
+          "key": false,
+          "slot": "pre_race"
+        },
+        {
+          "discipline": "run",
+          "duration_min": 0,
+          "intensity": 5,
+          "description": "RACE DAY: Olympic triathlon (1.5 km swim, 40 km bike, 10 km run)",
+          "key": true,
+          "slot": "race"
+        }
+      ]
     }
   ]
 }

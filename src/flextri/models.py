@@ -44,17 +44,25 @@ class Workout:
     intensity: int = 2  # training zone 1-5
     description: str = ""
     key: bool = False  # key sessions get rescheduled, not dropped, when missed
+    slot: str | None = None  # in day-free plans: the role that decides its day (see SLOTS)
+
+
+# Roles a session can have in a day-free plan. The athlete picks the day for the
+# long ride, long run, brick and swims; the rest are spread over their training days.
+SLOTS = ("swim", "long_ride", "long_run", "brick", "bike", "run", "strength", "pre_race", "race")
 
 
 @dataclass
 class TemplateWeek:
     phase: Phase
-    # day index 0 (Mon) .. 6 (Sun) -> workouts that day
+    # day index 0 (Mon) .. 6 (Sun) -> workouts that day (plans with fixed days)
     days: dict[int, list[Workout]] = field(default_factory=dict)
+    # the week's sessions, each with a slot, when the plan leaves the days to the athlete
+    sessions: list[Workout] = field(default_factory=list)
 
     @property
     def volume_min(self) -> int:
-        return sum(w.duration_min for ws in self.days.values() for w in ws)
+        return sum(w.duration_min for ws in self.days.values() for w in ws) + sum(w.duration_min for w in self.sessions)
 
 
 @dataclass
@@ -103,7 +111,10 @@ class Athlete:
     max_weekday_min: int | None = None
     max_weekend_min: int | None = None
     long_day: int | None = None  # weekday for the week's longest session
-    pool_days: set[int] | None = None  # None = pool every day
+    pool_days: set[int] | None = None  # swim days; None = any training day
+    long_ride_day: int | None = None
+    long_run_day: int | None = None
+    brick_day: int | None = None
 
     def limit_for(self, weekday: int) -> int | None:
         specific = self.max_weekend_min if weekday in WEEKEND else self.max_weekday_min

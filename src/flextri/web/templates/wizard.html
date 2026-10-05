@@ -85,12 +85,17 @@ input[type=text], input[type=date], input[type=number], select { width: 100%; }
         <div><label for="max_weekday_min">Max minutes on weekdays <span class="hint">(optional)</span></label><input id="max_weekday_min" name="max_weekday_min" type="number" min="10" step="5" value="{{ v.max_weekday_min }}"></div>
         <div><label for="max_weekend_min">Max minutes on weekends <span class="hint">(optional)</span></label><input id="max_weekend_min" name="max_weekend_min" type="number" min="10" step="5" value="{{ v.max_weekend_min }}"></div>
       </div>
-      <label for="long_day">Long-session day <span class="hint">(optional)</span></label>
-      <select id="long_day" name="long_day">
-        <option value="">No preference</option>
-        {% for d in range(7) %}<option value="{{ d }}" {{ "selected" if v.long_day == d }}>{{ DAY_NAMES[d] }}</option>{% endfor %}
-      </select>
-      <label>Days with pool access <span class="hint">(leave empty if any day works)</span></label>
+      <h3>Which day for what</h3>
+      <p class="hint">Your plan says what to do each week. You pick the days; everything else is spread over your other training days.</p>
+      <div class="row">
+        {% for key, text in [("long_ride_day", "Long ride"), ("long_run_day", "Long run"), ("brick_day", "Brick (bike then run)")] %}
+        <div><label for="{{ key }}">{{ text }}</label>
+          <select id="{{ key }}" name="{{ key }}" data-ordered-select>
+            {% for d in range(7) %}<option value="{{ d }}" data-weekday="{{ d }}" {{ "selected" if v[key] == d }}>{{ DAY_NAMES[d] }}</option>{% endfor %}
+          </select></div>
+        {% endfor %}
+      </div>
+      <label>Swim days <span class="hint">(leave empty to let flexTri choose)</span></label>
       <div class="chips" data-ordered-days>
         {% for d in range(7) %}
         <label data-weekday="{{ d }}"><input type="checkbox" name="pool_days" value="{{ d }}" {{ "checked" if d in v.pool_days }}><span>{{ DAY_NAMES[d] }}</span></label>
@@ -128,7 +133,7 @@ input[type=text], input[type=date], input[type=number], select { width: 100%; }
 
   function orderDays() {
     const start = Number(form.querySelector("[name=week_start]:checked")?.value || 0);
-    form.querySelectorAll("[data-ordered-days]").forEach(group => {
+    form.querySelectorAll("[data-ordered-days], [data-ordered-select]").forEach(group => {
       [...group.children].sort((a, b) => ((a.dataset.weekday - start + 7) % 7) - ((b.dataset.weekday - start + 7) % 7))
         .forEach(el => group.appendChild(el));
     });

@@ -65,6 +65,9 @@ class ProfileIn(BaseModel):
     max_weekend_min: int | None = Field(default=None, gt=0)
     long_day: int | None = Field(default=None, ge=0, le=6)
     pool_days: set[int] | None = None
+    long_ride_day: int | None = Field(default=None, ge=0, le=6)
+    long_run_day: int | None = Field(default=None, ge=0, le=6)
+    brick_day: int | None = Field(default=None, ge=0, le=6)
     plan: str | None = None  # id from plan_catalog(); only used when the schedule is first built
 
     @model_validator(mode="after")

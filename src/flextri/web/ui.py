@@ -60,6 +60,9 @@ def _profile_from_form(form) -> tuple[api.ProfileIn | None, list[str]]:
         "max_weekday_min": opt_int("max_weekday_min"),
         "max_weekend_min": opt_int("max_weekend_min"),
         "long_day": opt_int("long_day"),
+        "long_ride_day": opt_int("long_ride_day"),
+        "long_run_day": opt_int("long_run_day"),
+        "brick_day": opt_int("brick_day"),
         "pool_days": [int(d) for d in form.getlist("pool_days")] or None,
         "plan": form.get("plan") or None,
     }
@@ -161,6 +164,9 @@ def setup(request: Request, store: SqliteStore = Depends(api.get_store), today: 
         "max_weekend_min": a.max_weekend_min or "" if a else "",
         "long_day": a.long_day if a and a.long_day is not None else "",
         "pool_days": sorted(a.pool_days) if a and a.pool_days is not None else [],
+        "long_ride_day": a.long_ride_day if a and a.long_ride_day is not None else 5,
+        "long_run_day": a.long_run_day if a and a.long_run_day is not None else 6,
+        "brick_day": a.brick_day if a and a.brick_day is not None else 1,
     }
     plans = _plan_choices()
     values["plan"] = plans[0]["id"]

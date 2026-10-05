@@ -87,3 +87,14 @@ def test_wizard_offers_plans_and_builds_the_chosen_one(client):
 def test_unknown_plan_is_rejected(client):
     html = client.post("/ui/preview", data={**FORM, "plan": "nope"}).text
     assert "Unknown plan" in html
+
+
+def test_wizard_day_choices_reach_the_plan(client):
+    html = client.get("/setup").text
+    assert 'name="long_ride_day"' in html and 'name="brick_day"' in html and "Swim days" in html
+    form = {**FORM, "plan": "olympic_8week_triathlete", "long_ride_day": "6", "long_run_day": "5",
+            "brick_day": "3", "pool_days": ["2", "5"]}
+    assert "long ride Sun, long run Sat, brick Thu" in client.post("/ui/preview", data=form).text
+    client.post("/setup", data=form)
+    a = api.get_profile(store=api.app.dependency_overrides[api.get_store]())
+    assert (a["long_ride_day"], a["long_run_day"], a["brick_day"], sorted(a["pool_days"])) == (6, 5, 3, [2, 5])

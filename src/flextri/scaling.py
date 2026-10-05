@@ -107,7 +107,7 @@ def _layout_week(week: TemplateWeek, athlete: Athlete) -> dict[int, list[tuple[W
             placed.setdefault(where, []).append((w, notes))
             used[where] = used.get(where, 0) + 1
 
-    long_day = athlete.long_day
+    long_day = athlete.long_day if athlete.long_day is not None else athlete.long_ride_day
     if long_day is not None and long_day in athlete.available_days:
         training = [(d, w) for d, ws in placed.items() for w, _ in ws if w.discipline != Discipline.REST]
         if training:
@@ -127,6 +127,74 @@ def _layout_week(week: TemplateWeek, athlete: Athlete) -> dict[int, list[tuple[W
 
 DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
+# Where the athlete's chosen-day sessions go when they haven't picked a day.
+DEFAULT_DAYS = {"long_ride": 5, "long_run": 6, "brick": 1}
+ANCHORS = ("long_ride", "long_run", "brick")
+
+
+def _layout_flexible(week: TemplateWeek, athlete: Athlete, open_days: set[int],
+                     race_day: int | None) -> dict[int, list[tuple[Workout, list[str]]]]:
+    """Place a day-free week: race and anchors on their days, then swims, bike/run and strength spread out.
+
+    open_days are the weekdays of this calendar week that fall inside the training block.
+    """
+    pos = lambda d: (d - athlete.week_start) % 7
+    placed: dict[int, list[tuple[Workout, list[str]]]] = {}
+    has_race = race_day is not None and any(w.slot == "race" for w in week.sessions)
+    if has_race:
+        # nothing hard after the shake-out: the race week ends with pre-race and race day
+        open_days = {d for d in open_days if pos(d) < pos(race_day) - 1}
+    avail = (athlete.available_days & open_days) or open_days or set(athlete.available_days)
+
+    def put(day: int, w: Workout, notes: list[str] | None = None) -> None:
+        placed.setdefault(day, []).append((copy.deepcopy(w), notes or []))
+
+    def on(day: int) -> list[Workout]:
+        return [w for w, _ in placed.get(day, [])]
+
+    def minutes(day: int) -> int:
+        return sum(w.duration_min for w in on(day))
+
+    by_slot: dict[str, list[Workout]] = {}
+    for w in week.sessions:
+        by_slot.setdefault(w.slot or w.discipline.value, []).append(w)
+
+    for w in by_slot.pop("race", []):
+        put(race_day if has_race else max(avail, key=pos), w)
+    for w in by_slot.pop("pre_race", []):
+        put((race_day - 1) % 7 if has_race else max(avail, key=pos), w)
+
+    anchor_days = set()
+    for slot in ANCHORS:
+        chosen = getattr(athlete, f"{slot}_day")
+        wanted = DEFAULT_DAYS[slot] if chosen is None else chosen
+        for w in by_slot.pop(slot, []):
+            day = _nearest(wanted, avail, {}, athlete.week_start)
+            notes = [] if day == wanted or chosen is None else [
+                f"on {DAY_NAMES[day]}: {DAY_NAMES[wanted]} is outside your training days this week"]
+            put(day, w, notes)
+            anchor_days.add(day)
+
+    def is_sport(w: Workout, sport: str) -> bool:
+        return w.discipline.value == sport or (w.discipline.value == "brick" and sport in ("bike", "run"))
+
+    def spread(items: list[Workout], candidates: set[int], same: str) -> None:
+        for w in sorted(items, key=lambda w: -w.duration_min):
+            def score(d: int):
+                same_day = sum(is_sport(x, same) for x in on(d))
+                near = sum(is_sport(x, same) for n in ((d - 1) % 7, (d + 1) % 7) for x in on(n))
+                return (same_day, d in anchor_days, near, len(on(d)), minutes(d), pos(d))
+            put(min(candidates, key=score), w)
+
+    swim_days = (athlete.pool_days & avail) if athlete.pool_days else set()
+    spread(by_slot.pop("swim", []), swim_days or avail, "swim")
+    for slot in ("bike", "run"):
+        spread(by_slot.pop(slot, []), avail, slot)
+    spread(by_slot.pop("strength", []), avail, "strength")
+    for items in by_slot.values():  # anything else (e.g. an unknown slot) goes where there is room
+        spread(items, avail, items[0].discipline.value)
+    return placed
+
 
 def _schedule_workouts(template: PlanTemplate, athlete: Athlete, first_id: int = 1) -> list[ScheduledWorkout]:
     if not athlete.available_days:
@@ -138,7 +206,14 @@ def _schedule_workouts(template: PlanTemplate, athlete: Athlete, first_id: int =
     next_id = first_id
     for i, week in enumerate(weeks):
         week_first = first + timedelta(weeks=i)
-        for weekday, items in sorted(_layout_week(week, athlete).items(), key=lambda kv: (kv[0] - athlete.week_start) % 7):
+        if week.sessions:
+            dates = [week_first + timedelta(days=k) for k in range(7)]
+            open_days = {d.weekday() for d in dates if athlete.start_date <= d <= athlete.race_date}
+            race_day = athlete.race_date.weekday() if athlete.race_date in dates else None
+            layout = _layout_flexible(week, athlete, open_days, race_day)
+        else:
+            layout = _layout_week(week, athlete)
+        for weekday, items in sorted(layout.items(), key=lambda kv: (kv[0] - athlete.week_start) % 7):
             when = week_first + timedelta(days=(weekday - athlete.week_start) % 7)
             if when < athlete.start_date or when > athlete.race_date:
                 continue

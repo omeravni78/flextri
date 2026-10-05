@@ -29,7 +29,8 @@ dl.summary dd { margin: 0; }
     <dt>Week</dt><dd>starts {{ DAY_NAMES[p.week_start] }}; train {{ p.available_days | daynames(ordered) }}</dd>
     {% if p.max_weekday_min or p.max_weekend_min %}<dt>Limits</dt><dd>{% if p.max_weekday_min %}weekdays {{ p.max_weekday_min }} min{% endif %}{% if p.max_weekday_min and p.max_weekend_min %}, {% endif %}{% if p.max_weekend_min %}weekends {{ p.max_weekend_min }} min{% endif %}</dd>{% endif %}
     {% if p.long_day is not none %}<dt>Long day</dt><dd>{{ DAY_NAMES[p.long_day] }}</dd>{% endif %}
-    {% if p.pool_days %}<dt>Pool</dt><dd>{{ p.pool_days | daynames(ordered) }}</dd>{% endif %}
+    {% if p.long_ride_day is not none and p.long_run_day is not none and p.brick_day is not none %}<dt>Key days</dt><dd>long ride {{ DAY_NAMES[p.long_ride_day] }}, long run {{ DAY_NAMES[p.long_run_day] }}, brick {{ DAY_NAMES[p.brick_day] }}</dd>{% endif %}
+    {% if p.pool_days %}<dt>Swim days</dt><dd>{{ p.pool_days | daynames(ordered) }}</dd>{% endif %}
   </dl>
   <h2 style="margin-top:16px">Your first two weeks</h2>
   {% for w in mini.weeks %}
