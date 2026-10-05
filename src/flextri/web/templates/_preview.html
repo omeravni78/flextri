@@ -14,7 +14,7 @@ dl.summary { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14p
 dl.summary dt { color: var(--quiet); }
 dl.summary dd { margin: 0; }
 </style>
-<p><strong>Your {{ plan_weeks }}-week plan becomes {{ weeks }} weeks.</strong></p>
+<p><strong>{{ plan }}</strong>: {{ plan_weeks }} weeks as written, fitted to <strong>{{ weeks }} weeks</strong> for you.</p>
 <div class="phasebar">{% for b in bar %}<div class="ph-{{ b.phase }}" style="flex: {{ b.weeks }}">{{ b.phase }} · {{ b.weeks }}</div>{% endfor %}</div>
 <p class="hint">The taper stays as written. Base, build and peak stretch or shrink to fill the rest.</p>
 {% if warning %}<div class="banner error">{{ warning }}</div>{% endif %}
@@ -23,6 +23,7 @@ dl.summary dd { margin: 0; }
 <div id="review" hx-swap-oob="innerHTML">
   <dl class="summary">
     <dt>Name</dt><dd>{{ p.name }}</dd>
+    <dt>Plan</dt><dd>{{ plan }}</dd>
     <dt>Race</dt><dd>{{ p.distance.value }} on {{ p.race_date | day("%a %d %b %Y") }}, goal: {{ p.goal }}</dd>
     <dt>Training</dt><dd>{{ p.start_date | day("%d %b") }} to race day, {{ weeks }} weeks</dd>
     <dt>Week</dt><dd>starts {{ DAY_NAMES[p.week_start] }}; train {{ p.available_days | daynames(ordered) }}</dd>

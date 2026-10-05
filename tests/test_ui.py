@@ -38,7 +38,7 @@ def test_new_athlete_lands_on_wizard(client):
 
 def test_preview_shows_fit_and_errors(client):
     html = client.post("/ui/preview", data=FORM).text
-    assert "becomes 13 weeks" in html and "taper" in html and "Your first two weeks" in html
+    assert "fitted to <strong>13 weeks</strong>" in html and "taper" in html and "Your first two weeks" in html
     bad = client.post("/ui/preview", data={**FORM, "available_days": ["1", "2"]}).text
     assert "Pick at least 3 training days" in bad
 
@@ -71,3 +71,19 @@ def test_edit_setup_prefills_and_previews_changes(client):
     assert "2 weeks added" in html
     assert client.post("/setup", data={**FORM, "race_date": "2027-01-10"}).status_code == 200
     assert "Week 1 of 15" in client.get("/ui/calendar?around=2026-10-04").text
+
+
+def test_wizard_offers_plans_and_builds_the_chosen_one(client):
+    html = client.get("/setup").text
+    assert 'name="plan" value="olympic_8week_triathlete"' in html
+    assert 'name="plan" value="placeholder_plan"' in html
+    form = {**FORM, "plan": "olympic_8week_triathlete"}
+    assert "Triathlete.com 8-week Olympic plan" in client.post("/ui/preview", data=form).text
+    assert client.post("/setup", data=form).headers["HX-Redirect"] == "/?saved=1"
+    cal = client.get("/").text
+    assert "Triathlete.com 8-week Olympic plan" in cal and "Week 1 of" in cal
+
+
+def test_unknown_plan_is_rejected(client):
+    html = client.post("/ui/preview", data={**FORM, "plan": "nope"}).text
+    assert "Unknown plan" in html

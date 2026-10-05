@@ -13,6 +13,10 @@
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
 .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+.plans { display: grid; gap: 8px; }
+.plan-option { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; margin: 0; }
+.plan-option:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.plan-option > span { display: flex; flex-direction: column; gap: 2px; }
 input[type=text], input[type=date], input[type=number], select { width: 100%; }
 </style>
 <div class="wizard">
@@ -48,6 +52,17 @@ input[type=text], input[type=date], input[type=number], select { width: 100%; }
         <label><input type="radio" name="distance" value="{{ val }}" {{ "checked" if v.distance == val }}><span>{{ text }}</span></label>
         {% endfor %}
       </div>
+      <label>Training plan</label>
+      {% if editing %}
+      <p>{{ current_plan }} <span class="hint">(kept when you edit your setup)</span></p>
+      {% else %}
+      <div class="plans">
+        {% for pl in plans %}
+        <label class="plan-option"><input type="radio" name="plan" value="{{ pl.id }}" {{ "checked" if v.plan == pl.id }}>
+          <span><strong>{{ pl.name }}</strong><span class="hint">{{ pl.weeks }} weeks as written, {{ pl.hours }}</span></span></label>
+        {% endfor %}
+      </div>
+      {% endif %}
       <label for="goal">Goal <span class="hint">"finish" or a target time like 2:45:00</span></label>
       <input id="goal" name="goal" type="text" value="{{ v.goal }}">
     </section>

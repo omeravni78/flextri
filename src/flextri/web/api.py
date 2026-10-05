@@ -20,6 +20,7 @@ from ..storage import SqliteStore, athlete_to_dict, load_template
 
 ROOT = Path(__file__).resolve().parents[3]
 TEMPLATE_PATH = Path(os.environ.get("FLEXTRI_TEMPLATE", ROOT / "examples" / "placeholder_plan.json"))
+PLANS_DIR = Path(os.environ.get("FLEXTRI_PLANS", ROOT / "plans"))
 DB_PATH = os.environ.get("FLEXTRI_DB", "flextri.db")
 
 app = FastAPI(title="flexTri")
@@ -35,6 +36,17 @@ def get_store() -> SqliteStore:
 
 def get_today() -> date:
     return date.today()
+
+
+def plan_catalog() -> dict[str, Path]:
+    """Plans the athlete can pick in the wizard, by id (file stem). The default template is always offered."""
+    plans = {p.stem: p for p in sorted(PLANS_DIR.glob("*.json"))} if PLANS_DIR.is_dir() else {}
+    plans.setdefault(TEMPLATE_PATH.stem, TEMPLATE_PATH)
+    return plans
+
+
+def plan_template(plan_id: str | None):
+    return load_template(plan_catalog().get(plan_id or "", TEMPLATE_PATH))
 
 
 class ProfileIn(BaseModel):
@@ -53,6 +65,7 @@ class ProfileIn(BaseModel):
     max_weekend_min: int | None = Field(default=None, gt=0)
     long_day: int | None = Field(default=None, ge=0, le=6)
     pool_days: set[int] | None = None
+    plan: str | None = None  # id from plan_catalog(); only used when the schedule is first built
 
     @model_validator(mode="after")
     def check(self):
@@ -60,10 +73,12 @@ class ProfileIn(BaseModel):
             raise ValueError("weekdays are 0 (Mon) to 6 (Sun)")
         if (self.race_date - self.start_date).days < 14:
             raise ValueError("the race must be at least 2 weeks after the start date")
+        if self.plan is not None and self.plan not in plan_catalog():
+            raise ValueError(f"unknown plan {self.plan!r}")
         return self
 
     def to_athlete(self) -> Athlete:
-        return Athlete(**self.model_dump())
+        return Athlete(**self.model_dump(exclude={"plan"}))
 
 
 class ActionIn(BaseModel):
@@ -111,9 +126,9 @@ def get_profile(store: SqliteStore = Depends(get_store)):
 @app.post("/api/profile/preview")
 def preview_profile(p: ProfileIn, store: SqliteStore = Depends(get_store), today: date = Depends(get_today)):
     """Step 4 of the wizard, and the 'what will change' screen when editing."""
-    template = load_template(TEMPLATE_PATH)
-    weeks = weeks_until(p.start_date, p.race_date, p.week_start)
     existing = store.load()
+    template = existing.template if existing and existing.template else plan_template(p.plan)
+    weeks = weeks_until(p.start_date, p.race_date, p.week_start)
     changes = preview_rebuild(existing, p.to_athlete(), today)[1] if existing else []
     return {
         "plan": template.name,
@@ -129,7 +144,7 @@ def save_profile(p: ProfileIn, store: SqliteStore = Depends(get_store), today: d
     """Step 5 confirm, or 'Edit my setup' save. Past days never change."""
     existing = store.load()
     if existing is None:
-        schedule = build_schedule(load_template(TEMPLATE_PATH), p.to_athlete())
+        schedule = build_schedule(plan_template(p.plan), p.to_athlete())
         changes = [f"Plan fitted to {weeks_until(p.start_date, p.race_date, p.week_start)} weeks"]
     else:
         schedule, changes = existing, rebuild(existing, p.to_athlete(), today)
