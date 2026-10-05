@@ -3,17 +3,19 @@
 The athlete types their Garmin email and password once (plus the two-step code if
 Garmin asks for one). flexTri never writes the password anywhere: it logs in,
 keeps only Garmin's login tokens in the same folder the command line uses
-(``GARMINTOKENS``, default ``~/.garminconnect``), and forgets the password. After
-that, ``python -m flextri.garmin`` and the web page share the same connection.
+(``GARMINTOKENS``, default ``garmin`` in flexTri's data folder, see ``paths.py``),
+and forgets the password. After that, ``python -m flextri.garmin`` and the web
+page share the same connection.
 Disconnecting deletes the tokens.
 """
 
 from __future__ import annotations
 
-import os
 import time
 from pathlib import Path
 from typing import Any, Callable
+
+from . import paths
 
 TOKEN_FILE = "garmin_tokens.json"
 # Files older garminconnect releases (built on garth) wrote; removed on disconnect too.
@@ -26,7 +28,7 @@ class GarminLoginError(Exception):
 
 
 def token_dir() -> Path:
-    return Path(os.environ.get("GARMINTOKENS", "~/.garminconnect")).expanduser()
+    return paths.garmin_tokens()
 
 
 def _garmin_factory(email: str | None = None, password: str | None = None) -> Any:

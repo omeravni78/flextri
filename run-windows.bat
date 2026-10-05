@@ -1,5 +1,6 @@
 @echo off
-rem flexTri on Windows: double-click this file, or run it from a Command Prompt in this folder.
+rem flexTri from a checkout, for developers. Everyone else: install flexTri from the GitHub Releases page.
+rem Double-click this file, or run it from a Command Prompt in this folder.
 rem First run sets up a .venv folder (needs Python 3.11+ from python.org). Every run makes sure the
 rem dependencies match pyproject.toml, so a .venv made from an older checkout gets what it is missing.
 setlocal
@@ -12,11 +13,10 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 echo Checking dependencies...
-".venv\Scripts\python.exe" -m pip install --quiet --disable-pip-version-check -e ".[dev,garmin]" || goto :failed
+".venv\Scripts\python.exe" -m pip install --quiet --disable-pip-version-check -e ".[dev,garmin,app]" || goto :failed
 
-echo Starting flexTri at http://127.0.0.1:8000  (close this window to stop it)
-start "" http://127.0.0.1:8000
-".venv\Scripts\python.exe" -m uvicorn flextri.web.api:app --port 8000
+echo Starting flexTri; it opens in your browser. Close this window or press Quit in the app to stop it.
+".venv\Scripts\python.exe" -m flextri.launcher
 goto :eof
 
 :nopython

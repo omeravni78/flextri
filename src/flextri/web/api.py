@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
-from .. import actions
+from .. import actions, paths
 from ..adaptation import apply_checkin
 from ..calendar_view import build_calendar
 from ..ceremony import summarize
@@ -18,10 +18,8 @@ from ..models import Athlete, CheckIn, Discipline, Distance, Experience, Workout
 from ..scaling import build_schedule, crowding_warning, preview_rebuild, rebuild, weeks_until
 from ..storage import SqliteStore, athlete_to_dict, load_template
 
-ROOT = Path(__file__).resolve().parents[3]
-TEMPLATE_PATH = Path(os.environ.get("FLEXTRI_TEMPLATE", ROOT / "examples" / "placeholder_plan.json"))
-PLANS_DIR = Path(os.environ.get("FLEXTRI_PLANS", ROOT / "plans"))
-DB_PATH = os.environ.get("FLEXTRI_DB", "flextri.db")
+TEMPLATE_PATH = Path(os.environ.get("FLEXTRI_TEMPLATE", paths.bundled("examples", "placeholder_plan.json")))
+PLANS_DIR = Path(os.environ.get("FLEXTRI_PLANS", paths.bundled("plans")))
 
 app = FastAPI(title="flexTri")
 _store: SqliteStore | None = None
@@ -30,7 +28,7 @@ _store: SqliteStore | None = None
 def get_store() -> SqliteStore:
     global _store
     if _store is None:
-        _store = SqliteStore(DB_PATH)
+        _store = SqliteStore(paths.db_path())
     return _store
 
 

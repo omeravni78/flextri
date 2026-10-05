@@ -1,15 +1,15 @@
 """Day-free plans: the athlete picks the days, the plan only says what to do each week."""
 
 from datetime import date
-from pathlib import Path
 
 import pytest
 
 from flextri.models import Athlete
+from flextri.paths import bundled
 from flextri.scaling import build_schedule
 from flextri.storage import load_template
 
-OLYMPIC = Path(__file__).parent.parent / "plans" / "olympic_8week_triathlete.json"
+OLYMPIC = bundled("plans", "olympic_8week_triathlete.json")
 MON = date(2026, 10, 5)
 RACE = date(2026, 11, 28)  # a Saturday, 8 weeks out
 

@@ -3,14 +3,17 @@ name = "flextri"
 version = "0.1.0"
 description = "Flexible triathlon coaching: fit any plan to your timeline and adapt it daily."
 requires-python = ">=3.11"
-dependencies = ["fastapi>=0.110", "uvicorn>=0.29", "jinja2>=3.1", "python-multipart>=0.0.9"]
+dependencies = ["fastapi>=0.110", "uvicorn>=0.29", "jinja2>=3.1", "python-multipart>=0.0.9", "platformdirs>=4"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.27"]
 garmin = ["garminconnect>=0.3"]
+app = ["pystray>=0.19", "pillow>=10"]  # tray icon for the desktop launcher
+build = ["pyinstaller>=6.10"]
 
 [project.scripts]
 flextri = "flextri.cli:main"
+flextri-app = "flextri.launcher:main"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -20,7 +23,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-flextri = ["web/templates/*.html", "web/static/*"]
+flextri = ["web/templates/*.html", "web/static/*", "data/plans/*.json", "data/examples/*.json", "data/icon.png"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
