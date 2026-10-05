@@ -16,7 +16,7 @@ from ..adaptation import apply_checkin
 from ..calendar_view import build_calendar
 from ..ceremony import summarize
 from ..models import CheckIn, Discipline
-from ..scaling import build_schedule, fit_weeks, preview_rebuild, rebuild, week_first_day, weeks_until
+from ..scaling import build_schedule, crowding_warning, fit_weeks, preview_rebuild, rebuild, week_first_day, weeks_until
 from ..storage import SqliteStore, load_template
 from . import api
 
@@ -196,6 +196,7 @@ async def preview(request: Request, store: SqliteStore = Depends(api.get_store),
         "weeks": n,
         "bar": _phase_bar(template, n),
         "warning": api._fit_warning(profile),
+        "crowding": crowding_warning(template, len(profile.available_days)),
         "changes": changes,
         "mini": mini,
         "ordered": _ordered_days(athlete.week_start),

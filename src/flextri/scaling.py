@@ -130,6 +130,47 @@ DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 # Where the athlete's chosen-day sessions go when they haven't picked a day.
 DEFAULT_DAYS = {"long_ride": 5, "long_run": 6, "brick": 1}
 ANCHORS = ("long_ride", "long_run", "brick")
+MAX_PER_DAY = 2  # sessions on one training day; extras are left out, easiest first
+
+
+def _by_priority(items: list[Workout], covered: set[str]) -> list[Workout]:
+    """Order sessions by what to keep when the athlete has fewer training days than the plan needs.
+
+    Key sessions first, then at least one swim, bike and run, then the rest of swim/bike/run
+    in turn (longest first), and strength last.
+    """
+    rest = sorted(items, key=lambda w: -w.duration_min)
+    out = [w for w in rest if w.key]
+    rest = [w for w in rest if not w.key]
+    order = ["swim", "bike", "run"]
+    for sport in order:
+        first = next((w for w in rest if w.discipline.value == sport), None)
+        if first and sport not in covered:
+            out.append(first)
+            rest.remove(first)
+    while rest:
+        for sport in order + ["strength", None]:
+            nxt = next((w for w in rest if sport is None or w.discipline.value == sport), None)
+            if nxt:
+                out.append(nxt)
+                rest.remove(nxt)
+                break
+    return out
+
+
+def busiest_week(template: PlanTemplate) -> int:
+    """Most sessions in one training week of a day-free plan (race week aside); 0 for fixed-day plans."""
+    return max((len(w.sessions) for w in template.weeks if not any(s.slot == "race" for s in w.sessions)), default=0)
+
+
+def crowding_warning(template: PlanTemplate, training_days: int) -> str | None:
+    busiest = busiest_week(template)
+    if busiest <= MAX_PER_DAY * training_days:
+        return None
+    need = -(-busiest // MAX_PER_DAY)
+    return (f"Your plan has up to {busiest} sessions a week. With {training_days} training days flexTri keeps "
+            f"the key sessions and at most {MAX_PER_DAY} a day, and leaves out the easier ones. "
+            f"Pick {need} training days to get the full plan.")
 
 
 def _layout_flexible(week: TemplateWeek, athlete: Athlete, open_days: set[int],
@@ -178,21 +219,29 @@ def _layout_flexible(week: TemplateWeek, athlete: Athlete, open_days: set[int],
     def is_sport(w: Workout, sport: str) -> bool:
         return w.discipline.value == sport or (w.discipline.value == "brick" and sport in ("bike", "run"))
 
-    def spread(items: list[Workout], candidates: set[int], same: str) -> None:
-        for w in sorted(items, key=lambda w: -w.duration_min):
-            def score(d: int):
-                same_day = sum(is_sport(x, same) for x in on(d))
-                near = sum(is_sport(x, same) for n in ((d - 1) % 7, (d + 1) % 7) for x in on(n))
-                return (same_day, d in anchor_days, near, len(on(d)), minutes(d), pos(d))
-            put(min(candidates, key=score), w)
-
+    # Fill the remaining days in priority order, at most MAX_PER_DAY a day and one of each sport a day.
+    # Only when the plan doesn't fit the athlete's days are sessions left out (the easiest ones).
+    remaining = [w for ws in by_slot.values() for w in ws]
+    room = sum(max(0, MAX_PER_DAY - len(on(d))) for d in avail)
+    crowded = len(remaining) > room
+    covered = {sport for d in placed for w in on(d) for sport in ("swim", "bike", "run") if is_sport(w, sport)}
     swim_days = (athlete.pool_days & avail) if athlete.pool_days else set()
-    spread(by_slot.pop("swim", []), swim_days or avail, "swim")
-    for slot in ("bike", "run"):
-        spread(by_slot.pop(slot, []), avail, slot)
-    spread(by_slot.pop("strength", []), avail, "strength")
-    for items in by_slot.values():  # anything else (e.g. an unknown slot) goes where there is room
-        spread(items, avail, items[0].discipline.value)
+
+    for w in _by_priority(remaining, covered):
+        sport = w.discipline.value
+
+        def score(d: int):
+            near = sum(is_sport(x, sport) for n in ((d - 1) % 7, (d + 1) % 7) for x in on(n))
+            return (d in anchor_days, near, len(on(d)), minutes(d), pos(d))
+
+        has_room = lambda d: len(on(d)) < MAX_PER_DAY
+        free = lambda d: has_room(d) and not any(is_sport(x, sport) for x in on(d))
+        days = swim_days if sport == "swim" and swim_days else avail  # swims only where there is a pool
+        options = [d for d in days if free(d)]
+        if not options and not crowded:
+            options = [d for d in days if has_room(d)] or list(days)
+        if options:
+            put(min(options, key=score), w)
     return placed
 
 

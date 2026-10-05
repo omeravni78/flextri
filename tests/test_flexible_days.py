@@ -70,3 +70,23 @@ def test_same_sport_is_spread_out(olympic):
     for day in {w.date for w in first_week}:
         sports = [w.workout.discipline.value for w in first_week if w.date == day and w.workout.discipline.value != "strength"]
         assert len(sports) == len(set(sports)), (day, sports)
+
+
+def test_few_training_days_keeps_two_a_day_and_every_sport(olympic):
+    from collections import defaultdict
+
+    from flextri.scaling import crowding_warning
+
+    athlete = Athlete("omer", date(2026, 10, 12), date(2026, 12, 5), available_days={6, 1, 4}, week_start=6,
+                      long_ride_day=4, long_run_day=4)
+    s = build_schedule(olympic, athlete)
+    per_day, per_week = defaultdict(list), defaultdict(set)
+    for w in s.workouts:
+        if w.workout.slot != "pre_race":
+            per_day[w.date].append(w.workout.discipline.value)
+        per_week[w.date.isocalendar()[1]].add(w.workout.discipline.value)
+    assert max(len(v) for v in per_day.values()) <= 2
+    assert all(len(v) == len(set(v)) for v in per_day.values())  # never the same sport twice a day
+    assert all({"swim", "bike", "run"} <= sports or "brick" in sports for sports in list(per_week.values())[1:-1])
+    assert "Pick 6 training days" in crowding_warning(olympic, 3)
+    assert crowding_warning(olympic, 6) is None

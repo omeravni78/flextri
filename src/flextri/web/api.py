@@ -15,7 +15,7 @@ from ..adaptation import apply_checkin
 from ..calendar_view import build_calendar
 from ..ceremony import summarize
 from ..models import Athlete, CheckIn, Discipline, Distance, Experience, Workout
-from ..scaling import build_schedule, preview_rebuild, rebuild, weeks_until
+from ..scaling import build_schedule, crowding_warning, preview_rebuild, rebuild, weeks_until
 from ..storage import SqliteStore, athlete_to_dict, load_template
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -138,6 +138,7 @@ def preview_profile(p: ProfileIn, store: SqliteStore = Depends(get_store), today
         "plan_weeks": template.length_weeks,
         "fitted_weeks": weeks,
         "warning": _fit_warning(p),
+        "crowding": crowding_warning(template, len(p.available_days)),
         "changes": changes,
     }
 

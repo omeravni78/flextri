@@ -18,6 +18,7 @@ dl.summary dd { margin: 0; }
 <div class="phasebar">{% for b in bar %}<div class="ph-{{ b.phase }}" style="flex: {{ b.weeks }}">{{ b.phase }} · {{ b.weeks }}</div>{% endfor %}</div>
 <p class="hint">The taper stays as written. Base, build and peak stretch or shrink to fill the rest.</p>
 {% if warning %}<div class="banner error">{{ warning }}</div>{% endif %}
+{% if crowding %}<div class="banner error">{{ crowding }}</div>{% endif %}
 {% if changes %}<div class="banner"><div><strong>What changes</strong><ul>{% for c in changes %}<li>{{ c }}</li>{% endfor %}</ul><span class="hint">Past days and check-ins stay as they are.</span></div></div>{% endif %}
 
 <div id="review" hx-swap-oob="innerHTML">

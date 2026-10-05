@@ -61,7 +61,9 @@ Triathlete.com, with swims in meters.
 A plan week can be written two ways:
 - `"sessions"`: day-free. Each session has a `slot` (`swim`, `long_ride`, `long_run`, `brick`, `bike`, `run`,
   `strength`, `pre_race`, `race`). The athlete picks the long ride, long run, brick and swim days in the wizard;
-  the rest is spread over their training days so the same sport doesn't land twice on one day. The race goes on
+  the rest is spread over their training days, at most 2 sessions a day and never the same sport twice in a day.
+  With fewer training days than the plan needs, the key sessions and at least one swim, bike and run stay, and
+  the easiest sessions are left out (the wizard says how many days the full plan needs). The race goes on
   race day and `pre_race` sessions the day before.
 - `"days"`: fixed weekdays (`"0"` = Monday). Sessions move only when that day isn't a training day.
 

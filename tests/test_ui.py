@@ -98,3 +98,8 @@ def test_wizard_day_choices_reach_the_plan(client):
     client.post("/setup", data=form)
     a = api.get_profile(store=api.app.dependency_overrides[api.get_store]())
     assert (a["long_ride_day"], a["long_run_day"], a["brick_day"], sorted(a["pool_days"])) == (6, 5, 3, [2, 5])
+
+
+def test_preview_warns_when_too_few_days(client):
+    form = {**FORM, "plan": "olympic_8week_triathlete", "available_days": ["0", "2", "5"]}
+    assert "leaves out the easier ones" in client.post("/ui/preview", data=form).text
