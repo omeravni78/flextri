@@ -25,6 +25,7 @@ def _session(w: ScheduledWorkout, today: date) -> dict:
         "changed": bool(w.adjustments),
         "adjustments": w.adjustments,
         "can_swap_to": [s.discipline.value for s in alts["swaps"]],
+        "can_ease": bool(alts["easier"]) and not any(a.startswith("easier version") for a in w.adjustments),
     }
 
 

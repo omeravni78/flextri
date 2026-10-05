@@ -11,7 +11,7 @@ from dataclasses import asdict
 from datetime import date, timedelta
 
 from .adaptation import reschedule_key
-from .models import DayAction, Discipline, Phase, Schedule, ScheduledWorkout, Workout, WorkoutStatus
+from .models import DayAction, Discipline, Phase, Schedule, ScheduledWorkout, Workout, WorkoutStatus, nice_date
 from .scaling import week_first_day
 from .storage import _encode, workouts_from_list
 
@@ -51,9 +51,9 @@ def _planned(schedule: Schedule, workout_id: int) -> ScheduledWorkout:
     try:
         sw = schedule.get(workout_id)
     except KeyError:
-        raise ActionError(f"No session #{workout_id}") from None
+        raise ActionError("That session no longer exists") from None
     if sw.status != WorkoutStatus.PLANNED:
-        raise ActionError(f"Session #{workout_id} is already {sw.status.value}")
+        raise ActionError(f"{sw.label} is already {sw.status.value}")
     return sw
 
 
@@ -72,7 +72,7 @@ def easier(schedule: Schedule, workout_id: int, today: date) -> list[str]:
     sw.workout.duration_min, sw.workout.intensity = lighter.duration_min, lighter.intensity
     sw.adjustments.append("easier version, chosen by you")
     schedule.actions.append(DayAction(sw.date, "easier", sw.id))
-    return [f"#{sw.id} is now {sw.workout.duration_min} min, zone {sw.workout.intensity}"]
+    return [f"{sw.label} is now {sw.workout.duration_min} min, zone {sw.workout.intensity}"]
 
 
 def swap(schedule: Schedule, workout_id: int, discipline: Discipline, today: date) -> list[str]:
@@ -87,7 +87,7 @@ def swap(schedule: Schedule, workout_id: int, discipline: Discipline, today: dat
     sw.workout.discipline = discipline
     sw.workout.description = f"{discipline.value} instead of {skipped.value}"
     sw.adjustments.append(f"swapped from {skipped.value}, chosen by you")
-    changes = [f"#{sw.id} swapped to {discipline.value}"]
+    changes = [f"{nice_date(sw.date)} {skipped.value} swapped to {discipline.value}"]
     # Keep the weekly balance: the next easy session of the other sport gets the skipped one back.
     nxt = next(
         (w for w in sorted(schedule.upcoming(sw.date, 7), key=lambda w: w.date)
@@ -97,8 +97,8 @@ def swap(schedule: Schedule, workout_id: int, discipline: Discipline, today: dat
     if nxt:
         nxt.workout.discipline = skipped
         nxt.workout.description = f"{skipped.value} (balancing your swap on {sw.date})"
-        nxt.adjustments.append(f"swapped to {skipped.value} to balance #{sw.id}")
-        changes.append(f"#{nxt.id} on {nxt.date} becomes {skipped.value} to keep the week balanced")
+        nxt.adjustments.append(f"swapped to {skipped.value} to balance your swap on {nice_date(sw.date)}")
+        changes.append(f"{nice_date(nxt.date)} {discipline.value} becomes {skipped.value} to keep the week balanced")
     schedule.actions.append(DayAction(sw.date, "swap", sw.id, discipline.value))
     return changes
 
@@ -115,12 +115,12 @@ def move(schedule: Schedule, workout_id: int, new_date: date, today: date) -> li
     _snapshot(schedule)
     old = sw.date
     sw.date = new_date
-    sw.adjustments.append(f"moved from {old} by you")
-    changes = [f"#{sw.id} moved to {new_date}"]
+    sw.adjustments.append(f"moved from {nice_date(old)} by you")
+    changes = [f"{sw.workout.discipline.value.capitalize()} moved from {nice_date(old)} to {nice_date(new_date)}"]
     if sw.workout.key:
         for d in (new_date - timedelta(days=1), new_date + timedelta(days=1)):
             if any(w.workout.key and w.status == WorkoutStatus.PLANNED and w.id != sw.id for w in schedule.on(d)):
-                changes.append(f"Heads up: key sessions on {min(d, new_date)} and {max(d, new_date)} are back to back")
+                changes.append(f"Heads up: key sessions on {nice_date(min(d, new_date))} and {nice_date(max(d, new_date))} are back to back")
     schedule.actions.append(DayAction(new_date, "move", sw.id, str(old)))
     return changes
 
@@ -140,7 +140,7 @@ def rest(schedule: Schedule, day: date, today: date) -> list[str]:
         else:
             w.status = WorkoutStatus.DROPPED
             w.adjustments.append("rest day, chosen by you")
-            changes.append(f"#{w.id} dropped for rest")
+            changes.append(f"{w.label} dropped for rest")
     schedule.actions.append(DayAction(day, "rest"))
     return changes
 
@@ -157,8 +157,8 @@ def add(schedule: Schedule, day: date, workout: Workout, today: date) -> list[st
             if w.workout.discipline != Discipline.REST and not any(a.startswith("eased") for a in w.adjustments):
                 w.workout.duration_min = round(w.workout.duration_min * 0.8)
                 w.workout.intensity = min(w.workout.intensity, 2)
-                w.adjustments.append(f"eased after your extra session on {day}")
-                changes.append(f"Eased #{w.id} to {w.workout.duration_min} min, zone {w.workout.intensity}")
+                w.adjustments.append(f"eased after your extra session on {nice_date(day)}")
+                changes.append(f"Eased {w.label} to {w.workout.duration_min} min, zone {w.workout.intensity}")
     schedule.actions.append(DayAction(day, "add", sw.id))
     return changes
 
@@ -170,7 +170,7 @@ def undo(schedule: Schedule) -> list[str]:
     schedule.workouts = workouts_from_list(snap["workouts"])
     undone = schedule.actions[snap["actions"]:]
     del schedule.actions[snap["actions"]:]
-    return [f"Undid {a.kind} on {a.date}" for a in undone] or ["Undone"]
+    return [f"Undid {a.kind} on {nice_date(a.date)}" for a in undone] or ["Undone"]
 
 
 def _phase_on(schedule: Schedule, day: date) -> Phase:

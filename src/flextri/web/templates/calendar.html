@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}My training · flexTri{% endblock %}
+{% block nav %}<nav style="display:flex;gap:14px"><a href="/setup">Edit my setup</a>{% if finished %}<a href="/finish">Race summary</a>{% endif %}</nav>{% endblock %}
+{% block main %}
+<style>
+.layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+.toolbar h1 { margin: 0; font-size: 20px; }
+.grid { display: grid; grid-template-columns: 112px repeat(7, minmax(0, 1fr)); gap: 6px; }
+.grid .head { color: var(--quiet); font-size: 13px; text-align: center; padding-bottom: 2px; }
+.weeklabel { padding: 6px 4px; font-size: 13px; }
+.weeklabel strong { display: block; font-size: 14px; }
+.weeklabel .hint { display: block; }
+.cell { text-align: left; min-height: 88px; padding: 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); display: flex; flex-direction: column; gap: 3px; width: 100%; }
+.cell:hover { border-color: var(--accent); }
+.cell.today { border: 2px solid var(--accent); background: var(--accent-tint); }
+.cell.past { opacity: .85; }
+.cell.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cell .date { font-size: 12px; color: var(--quiet); display: flex; justify-content: space-between; }
+.chip { font-size: 12px; border-radius: 6px; padding: 2px 5px; border: 1.5px solid var(--sport); display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 4px; line-height: 1.3; }
+.chip .k { font-weight: 700; }
+.chip.done { background: color-mix(in srgb, var(--done) 22%, var(--card)); border-color: var(--done); }
+.chip.partial { background: color-mix(in srgb, var(--partial) 25%, var(--card)); border-color: var(--partial); }
+.chip.missed { background: color-mix(in srgb, var(--missed) 20%, var(--card)); border-color: var(--missed); text-decoration: line-through; }
+.chip.dropped { background: var(--rest); border-color: var(--line); color: var(--quiet); text-decoration: line-through; }
+.chip.rest { background: var(--rest); border-color: var(--line); color: var(--quiet); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; color: var(--quiet); font-size: 12px; margin-top: 12px; }
+.legend i { display: inline-block; width: 12px; height: 10px; border-radius: 4px; vertical-align: -1px; margin-right: 4px; border: 1.5px solid var(--quiet); }
+#panel:empty { display: none; }
+.panel { position: sticky; top: 12px; }
+.strip { display: none; }
+.wd { display: none; }
+@media (max-width: 760px) {
+  .layout { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr; }
+  .grid .head { display: none; }
+  .grid > .cell { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .grid > .cell .date { width: 92px; }
+  .wd { display: inline; margin-right: 4px; }
+  .grid > .later { display: none; }
+  .strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 12px; }
+  .strip button { height: 14px; padding: 0; border-radius: 7px; }
+  .panel { position: static; }
+}
+</style>
+<div id="app">{% include "_calendar.html" %}</div>
+{% endblock %}

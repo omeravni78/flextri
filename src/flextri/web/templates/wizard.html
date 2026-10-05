@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit my setup" if editing else "Welcome" }} · flexTri{% endblock %}
+{% block nav %}{% if editing %}<a href="/">Back to calendar</a>{% endif %}{% endblock %}
+{% block main %}
+<style>
+.wizard { max-width: 640px; margin: 0 auto; }
+.progress { display: flex; gap: 6px; margin-bottom: 16px; }
+.progress div { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
+.progress div.on { background: var(--accent); }
+.step { display: none; }
+.step.active { display: block; }
+.step-label { color: var(--quiet); font-size: 13px; margin-bottom: 2px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+.nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+input[type=text], input[type=date], input[type=number], select { width: 100%; }
+</style>
+<div class="wizard">
+  <h1>{{ "Edit my setup" if editing else "Let's build your plan" }}</h1>
+  <div class="progress" aria-hidden="true">{% for i in range(5) %}<div data-dot="{{ i }}"></div>{% endfor %}</div>
+  <form id="wizard" hx-post="/setup" hx-target="#errors" hx-swap="innerHTML">
+    <section class="step card" data-step="0">
+      <div class="step-label">Step 1 of 5</div>
+      <h2>About you</h2>
+      <label for="name">Your name</label>
+      <input id="name" name="name" type="text" value="{{ v.name }}" required autocomplete="given-name">
+      <label>Experience</label>
+      <div class="chips">
+        {% for val, text in [("first", "First triathlon"), ("some", "Done a few"), ("experienced", "Experienced")] %}
+        <label><input type="radio" name="experience" value="{{ val }}" {{ "checked" if v.experience == val }}><span>{{ text }}</span></label>
+        {% endfor %}
+      </div>
+      <label for="weekly_hours">Training hours per week now <span class="hint">(optional)</span></label>
+      <input id="weekly_hours" name="weekly_hours" type="number" min="0" max="40" step="0.5" value="{{ v.weekly_hours }}">
+    </section>
+
+    <section class="step card" data-step="1">
+      <div class="step-label">Step 2 of 5</div>
+      <h2>Your race</h2>
+      <div class="row">
+        <div><label for="race_date">Race date</label><input id="race_date" name="race_date" type="date" value="{{ v.race_date }}" required></div>
+        <div><label for="start_date">Start training on</label><input id="start_date" name="start_date" type="date" value="{{ v.start_date }}" required {{ "disabled" if editing }}>
+          {% if editing %}<input type="hidden" name="start_date" value="{{ v.start_date }}"><div class="hint">Your block already started.</div>{% endif %}</div>
+      </div>
+      <label>Distance</label>
+      <div class="chips">
+        {% for val, text in [("sprint", "Sprint"), ("olympic", "Olympic"), ("70.3", "70.3"), ("full", "Full")] %}
+        <label><input type="radio" name="distance" value="{{ val }}" {{ "checked" if v.distance == val }}><span>{{ text }}</span></label>
+        {% endfor %}
+      </div>
+      <label for="goal">Goal <span class="hint">"finish" or a target time like 2:45:00</span></label>
+      <input id="goal" name="goal" type="text" value="{{ v.goal }}">
+    </section>
+
+    <section class="step card" data-step="2">
+      <div class="step-label">Step 3 of 5</div>
+      <h2>Your week</h2>
+      <label>My week starts on</label>
+      <div class="chips">
+        <label><input type="radio" name="week_start" value="0" {{ "checked" if v.week_start == 0 }}><span>Monday</span></label>
+        <label><input type="radio" name="week_start" value="6" {{ "checked" if v.week_start == 6 }}><span>Sunday</span></label>
+      </div>
+      <label>Days I can train <span class="hint">(at least 3)</span></label>
+      <div class="chips" data-ordered-days>
+        {% for d in range(7) %}
+        <label data-weekday="{{ d }}"><input type="checkbox" name="available_days" value="{{ d }}" {{ "checked" if d in v.available_days }}><span>{{ DAY_NAMES[d] }}</span></label>
+        {% endfor %}
+      </div>
+      <div class="row">
+        <div><label for="max_weekday_min">Max minutes on weekdays <span class="hint">(optional)</span></label><input id="max_weekday_min" name="max_weekday_min" type="number" min="10" step="5" value="{{ v.max_weekday_min }}"></div>
+        <div><label for="max_weekend_min">Max minutes on weekends <span class="hint">(optional)</span></label><input id="max_weekend_min" name="max_weekend_min" type="number" min="10" step="5" value="{{ v.max_weekend_min }}"></div>
+      </div>
+      <label for="long_day">Long-session day <span class="hint">(optional)</span></label>
+      <select id="long_day" name="long_day">
+        <option value="">No preference</option>
+        {% for d in range(7) %}<option value="{{ d }}" {{ "selected" if v.long_day == d }}>{{ DAY_NAMES[d] }}</option>{% endfor %}
+      </select>
+      <label>Days with pool access <span class="hint">(leave empty if any day works)</span></label>
+      <div class="chips" data-ordered-days>
+        {% for d in range(7) %}
+        <label data-weekday="{{ d }}"><input type="checkbox" name="pool_days" value="{{ d }}" {{ "checked" if d in v.pool_days }}><span>{{ DAY_NAMES[d] }}</span></label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="step card" data-step="3">
+      <div class="step-label">Step 4 of 5</div>
+      <h2>How your plan fits</h2>
+      <div id="preview"><p class="hint">Working it out…</p></div>
+    </section>
+
+    <section class="step card" data-step="4">
+      <div class="step-label">Step 5 of 5</div>
+      <h2>Review</h2>
+      <div id="review"><p class="hint">Working it out…</p></div>
+    </section>
+
+    <div id="errors" role="alert"></div>
+    <div class="nav-buttons">
+      <button type="button" id="back">Back</button>
+      <button type="button" class="primary" id="next">Next</button>
+      <button type="submit" class="primary" id="confirm" hidden>{{ "Save changes" if editing else "Create my plan" }}</button>
+    </div>
+  </form>
+</div>
+<script>
+(() => {
+  const form = document.getElementById("wizard");
+  const steps = [...form.querySelectorAll(".step")];
+  const dots = [...document.querySelectorAll("[data-dot]")];
+  const back = document.getElementById("back"), next = document.getElementById("next"), confirm = document.getElementById("confirm");
+  let current = 0;
+
+  function orderDays() {
+    const start = Number(form.querySelector("[name=week_start]:checked")?.value || 0);
+    form.querySelectorAll("[data-ordered-days]").forEach(group => {
+      [...group.children].sort((a, b) => ((a.dataset.weekday - start + 7) % 7) - ((b.dataset.weekday - start + 7) % 7))
+        .forEach(el => group.appendChild(el));
+    });
+  }
+
+  function validStep(i) {
+    const fields = [...steps[i].querySelectorAll("input, select")].filter(el => !el.disabled);
+    for (const el of fields) { if (!el.checkValidity()) { el.reportValidity(); return false; } }
+    if (i === 2 && form.querySelectorAll("[name=available_days]:checked").length < 3) {
+      document.getElementById("errors").innerHTML = '<div class="banner error">Pick at least 3 training days.</div>';
+      return false;
+    }
+    document.getElementById("errors").innerHTML = "";
+    return true;
+  }
+
+  function show(i) {
+    current = i;
+    steps.forEach((s, k) => s.classList.toggle("active", k === i));
+    dots.forEach((d, k) => d.classList.toggle("on", k <= i));
+    back.disabled = i === 0;
+    next.hidden = i === steps.length - 1;
+    confirm.hidden = i !== steps.length - 1;
+    if (i === 3) htmx.ajax("POST", "/ui/preview", { source: form, target: "#preview", swap: "innerHTML" });
+    steps[i].querySelector("input, select, button")?.focus({ preventScroll: true });
+  }
+
+  next.addEventListener("click", () => { if (validStep(current)) show(current + 1); });
+  back.addEventListener("click", () => show(Math.max(0, current - 1)));
+  form.querySelectorAll("[name=week_start]").forEach(r => r.addEventListener("change", orderDays));
+  orderDays();
+  show(0);
+})();
+</script>
+{% endblock %}

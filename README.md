@@ -10,10 +10,18 @@ athlete's real timeline, and adapt it every day from what they actually did.
    RPE, fatigue, soreness. Upcoming workouts adapt (`adaptation.py`).
 3. **Closing ceremony** (`flextri finish`): summary of the block (`ceremony.py`).
 
-## Web API (behind the wizard and calendar screens)
+## Run the app
 ```
 pip install -e '.[dev]'
-uvicorn flextri.web.api:app --reload   # then open http://127.0.0.1:8000/docs
+uvicorn flextri.web.api:app --reload   # open http://127.0.0.1:8000
+```
+New athletes land on the 5-step setup wizard. After that, the home screen is the 4-week calendar: tap a day to
+ease, swap, move or rest a session, check in, or log an extra session. "Edit my setup" reopens the wizard and shows
+what will change before saving. On a phone the calendar shows one week as a list with a 28-day strip on top.
+
+## Web API (behind the wizard and calendar screens)
+```
+uvicorn flextri.web.api:app --reload   # API docs at http://127.0.0.1:8000/docs
 ```
 | Endpoint | What it does |
 | --- | --- |
