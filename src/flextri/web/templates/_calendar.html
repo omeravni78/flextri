@@ -12,6 +12,7 @@
       <h1>{% if cal.weeks[0].number %}Week {{ cal.weeks[0].number }} of {{ cal.total_weeks }}{% else %}Your calendar{% endif %}</h1>
       <button hx-get="/ui/calendar?around={{ next }}" hx-target="#app" aria-label="Next week">›</button>
     </div>
+    <p class="hint plan-name">{{ cal.plan }}</p>
 
     <div class="strip" aria-label="Four weeks at a glance">
       {% for w in cal.weeks %}{% for d in w.days %}

@@ -14,21 +14,24 @@ dl.summary { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14p
 dl.summary dt { color: var(--quiet); }
 dl.summary dd { margin: 0; }
 </style>
-<p><strong>Your {{ plan_weeks }}-week plan becomes {{ weeks }} weeks.</strong></p>
+<p><strong>{{ plan }}</strong>: {{ plan_weeks }} weeks as written, fitted to <strong>{{ weeks }} weeks</strong> for you.</p>
 <div class="phasebar">{% for b in bar %}<div class="ph-{{ b.phase }}" style="flex: {{ b.weeks }}">{{ b.phase }} · {{ b.weeks }}</div>{% endfor %}</div>
 <p class="hint">The taper stays as written. Base, build and peak stretch or shrink to fill the rest.</p>
 {% if warning %}<div class="banner error">{{ warning }}</div>{% endif %}
+{% if crowding %}<div class="banner error">{{ crowding }}</div>{% endif %}
 {% if changes %}<div class="banner"><div><strong>What changes</strong><ul>{% for c in changes %}<li>{{ c }}</li>{% endfor %}</ul><span class="hint">Past days and check-ins stay as they are.</span></div></div>{% endif %}
 
 <div id="review" hx-swap-oob="innerHTML">
   <dl class="summary">
     <dt>Name</dt><dd>{{ p.name }}</dd>
+    <dt>Plan</dt><dd>{{ plan }}</dd>
     <dt>Race</dt><dd>{{ p.distance.value }} on {{ p.race_date | day("%a %d %b %Y") }}, goal: {{ p.goal }}</dd>
     <dt>Training</dt><dd>{{ p.start_date | day("%d %b") }} to race day, {{ weeks }} weeks</dd>
     <dt>Week</dt><dd>starts {{ DAY_NAMES[p.week_start] }}; train {{ p.available_days | daynames(ordered) }}</dd>
     {% if p.max_weekday_min or p.max_weekend_min %}<dt>Limits</dt><dd>{% if p.max_weekday_min %}weekdays {{ p.max_weekday_min }} min{% endif %}{% if p.max_weekday_min and p.max_weekend_min %}, {% endif %}{% if p.max_weekend_min %}weekends {{ p.max_weekend_min }} min{% endif %}</dd>{% endif %}
     {% if p.long_day is not none %}<dt>Long day</dt><dd>{{ DAY_NAMES[p.long_day] }}</dd>{% endif %}
-    {% if p.pool_days %}<dt>Pool</dt><dd>{{ p.pool_days | daynames(ordered) }}</dd>{% endif %}
+    {% if p.long_ride_day is not none and p.long_run_day is not none and p.brick_day is not none %}<dt>Key days</dt><dd>long ride {{ DAY_NAMES[p.long_ride_day] }}, long run {{ DAY_NAMES[p.long_run_day] }}, brick {{ DAY_NAMES[p.brick_day] }}</dd>{% endif %}
+    {% if p.pool_days %}<dt>Swim days</dt><dd>{{ p.pool_days | daynames(ordered) }}</dd>{% endif %}
   </dl>
   <h2 style="margin-top:16px">Your first two weeks</h2>
   {% for w in mini.weeks %}

@@ -16,7 +16,7 @@ from ..adaptation import apply_checkin
 from ..calendar_view import build_calendar
 from ..ceremony import summarize
 from ..models import CheckIn, Discipline
-from ..scaling import build_schedule, fit_weeks, preview_rebuild, rebuild, week_first_day, weeks_until
+from ..scaling import build_schedule, crowding_warning, fit_weeks, preview_rebuild, rebuild, week_first_day, weeks_until
 from ..storage import SqliteStore, load_template
 from . import api
 
@@ -60,7 +60,11 @@ def _profile_from_form(form) -> tuple[api.ProfileIn | None, list[str]]:
         "max_weekday_min": opt_int("max_weekday_min"),
         "max_weekend_min": opt_int("max_weekend_min"),
         "long_day": opt_int("long_day"),
+        "long_ride_day": opt_int("long_ride_day"),
+        "long_run_day": opt_int("long_run_day"),
+        "brick_day": opt_int("brick_day"),
         "pool_days": [int(d) for d in form.getlist("pool_days")] or None,
+        "plan": form.get("plan") or None,
     }
     try:
         return api.ProfileIn(**data), []
@@ -81,10 +85,21 @@ def _readable(err: dict) -> str:
     return f"{label}: {msg}" if label else msg[:1].upper() + msg[1:]
 
 
-def _phase_bar(n: int) -> list[dict]:
-    weeks = fit_weeks(load_template(api.TEMPLATE_PATH), n)
+def _phase_bar(template, n: int) -> list[dict]:
+    weeks = fit_weeks(template, n)
     counts = Counter(w.phase.value for w in weeks)
     return [{"phase": p, "weeks": counts[p]} for p in PHASES if counts[p]]
+
+
+def _plan_choices() -> list[dict]:
+    out = []
+    for plan_id, path in api.plan_catalog().items():
+        t = load_template(path)
+        hours = [w.volume_min / 60 for w in t.weeks]
+        out.append({"id": plan_id, "name": t.name, "weeks": t.length_weeks,
+                    "hours": f"{min(hours):.0f} to {max(hours):.0f} h a week"})
+    # real plans first, the placeholder last
+    return sorted(out, key=lambda c: c["id"] == api.TEMPLATE_PATH.stem)
 
 
 def _banner(changes: list[str], error: bool = False) -> dict:
@@ -149,8 +164,16 @@ def setup(request: Request, store: SqliteStore = Depends(api.get_store), today: 
         "max_weekend_min": a.max_weekend_min or "" if a else "",
         "long_day": a.long_day if a and a.long_day is not None else "",
         "pool_days": sorted(a.pool_days) if a and a.pool_days is not None else [],
+        "long_ride_day": a.long_ride_day if a and a.long_ride_day is not None else 5,
+        "long_run_day": a.long_run_day if a and a.long_run_day is not None else 6,
+        "brick_day": a.brick_day if a and a.brick_day is not None else 1,
     }
-    return templates.TemplateResponse(request, "wizard.html", {"v": values, "editing": a is not None})
+    plans = _plan_choices()
+    values["plan"] = plans[0]["id"]
+    return templates.TemplateResponse(request, "wizard.html", {
+        "v": values, "editing": a is not None, "plans": plans,
+        "current_plan": schedule.plan_name if schedule else None,
+    })
 
 
 @router.post("/ui/preview", response_class=HTMLResponse)
@@ -158,10 +181,10 @@ async def preview(request: Request, store: SqliteStore = Depends(api.get_store),
     profile, errors = _profile_from_form(await request.form())
     if errors:
         return templates.TemplateResponse(request, "_preview.html", {"errors": errors})
-    template = load_template(api.TEMPLATE_PATH)
+    existing = store.load()
+    template = existing.template if existing and existing.template else api.plan_template(profile.plan)
     athlete = profile.to_athlete()
     n = weeks_until(athlete.start_date, athlete.race_date, athlete.week_start)
-    existing = store.load()
     changes = preview_rebuild(existing, athlete, today)[1] if existing else []
     draft = build_schedule(template, athlete)
     mini = build_calendar(draft, today, max(athlete.start_date, today) if existing else athlete.start_date, weeks=2)
@@ -171,8 +194,9 @@ async def preview(request: Request, store: SqliteStore = Depends(api.get_store),
         "plan": template.name,
         "plan_weeks": template.length_weeks,
         "weeks": n,
-        "bar": _phase_bar(n),
+        "bar": _phase_bar(template, n),
         "warning": api._fit_warning(profile),
+        "crowding": crowding_warning(template, len(profile.available_days)),
         "changes": changes,
         "mini": mini,
         "ordered": _ordered_days(athlete.week_start),
@@ -187,7 +211,7 @@ async def save_setup(request: Request, store: SqliteStore = Depends(api.get_stor
         return templates.TemplateResponse(request, "_preview.html", {"errors": errors})
     existing = store.load()
     if existing is None:
-        schedule = build_schedule(load_template(api.TEMPLATE_PATH), profile.to_athlete())
+        schedule = build_schedule(api.plan_template(profile.plan), profile.to_athlete())
         changes = [f"Welcome {profile.name}! Your plan is fitted to "
                    f"{weeks_until(profile.start_date, profile.race_date, profile.week_start)} weeks."]
     else:

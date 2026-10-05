@@ -37,7 +37,8 @@ def template_from_dict(d: dict) -> PlanTemplate:
     weeks = [
         TemplateWeek(
             phase=Phase(w["phase"]),
-            days={int(day): [_workout(x) for x in ws] for day, ws in w["days"].items()},
+            days={int(day): [_workout(x) for x in ws] for day, ws in w.get("days", {}).items()},
+            sessions=[_workout(x) for x in w.get("sessions", [])],
         )
         for w in d["weeks"]
     ]
@@ -45,7 +46,7 @@ def template_from_dict(d: dict) -> PlanTemplate:
 
 
 def load_template(path: Path) -> PlanTemplate:
-    return template_from_dict(json.loads(Path(path).read_text()))
+    return template_from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
 
 
 def schedule_to_dict(s: Schedule) -> dict:
@@ -68,6 +69,9 @@ def athlete_from_dict(a: dict) -> Athlete:
         max_weekend_min=a.get("max_weekend_min"),
         long_day=a.get("long_day"),
         pool_days=set(a["pool_days"]) if a.get("pool_days") is not None else None,
+        long_ride_day=a.get("long_ride_day"),
+        long_run_day=a.get("long_run_day"),
+        brick_day=a.get("brick_day"),
     )
 
 
@@ -105,11 +109,11 @@ def schedule_from_dict(d: dict) -> Schedule:
 
 
 def save_schedule(s: Schedule, path: Path) -> None:
-    Path(path).write_text(json.dumps(schedule_to_dict(s), indent=2))
+    Path(path).write_text(json.dumps(schedule_to_dict(s), indent=2), encoding="utf-8")
 
 
 def load_schedule(path: Path) -> Schedule:
-    return schedule_from_dict(json.loads(Path(path).read_text()))
+    return schedule_from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
 
 
 class SqliteStore:

@@ -49,3 +49,14 @@ def test_schedule_respects_availability_and_dates(template):
     assert all(w.date.weekday() in athlete.available_days for w in s.workouts)
     assert all(w.workout.duration_min <= 75 for w in s.workouts)
     assert s.workouts[-1].phase == Phase.TAPER
+
+
+def test_shipped_plans_load_and_fit():
+    from pathlib import Path
+
+    from flextri.scaling import fit_weeks
+    from flextri.storage import load_template
+
+    for path in (Path(__file__).parent.parent / "plans").glob("*.json"):
+        t = load_template(path)
+        assert fit_weeks(t, 12)[-1].phase.value == "taper", path

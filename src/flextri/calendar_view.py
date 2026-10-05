@@ -67,4 +67,4 @@ def build_calendar(schedule: Schedule, today: date, around: date | None = None, 
             "done_min": done_min,
             "days": days,
         })
-    return {"athlete": a.name, "total_weeks": total, "week_start": a.week_start, "race_date": a.race_date.isoformat(), "weeks": out}
+    return {"athlete": a.name, "plan": schedule.plan_name, "total_weeks": total, "week_start": a.week_start, "race_date": a.race_date.isoformat(), "weeks": out}
