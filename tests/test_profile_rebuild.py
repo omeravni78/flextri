@@ -62,3 +62,31 @@ def test_rebuild_with_same_profile_changes_nothing(template):
     athlete = Athlete("omer", date(2026, 10, 5), date(2026, 12, 27))
     s = build_schedule(template, athlete)
     assert rebuild(s, athlete, date(2026, 10, 19)) == ["No changes to your upcoming sessions"]
+
+
+def test_restart_today_refits_plan_from_today(template):
+    athlete = Athlete("omer", date(2026, 10, 5), date(2026, 12, 27))
+    s = build_schedule(template, athlete)
+    today = date(2026, 10, 21)
+    past = [w for w in s.workouts if w.date < today]
+    past[0].status = WorkoutStatus.DONE
+
+    restart = Athlete("omer", today, date(2026, 12, 27))
+    changes = rebuild(s, restart, today)
+
+    assert changes[0] == "Training now starts Wed 21 Oct" and changes[1] == "2 weeks removed"
+    assert s.athlete.start_date == today
+    assert [w for w in s.workouts if w.date < today] == past  # logged history stays
+    fresh = build_schedule(template, restart)
+    future = [(w.date, w.workout.description) for w in s.workouts if w.date >= today]
+    assert future == [(w.date, w.workout.description) for w in fresh.workouts]
+    assert any(w.date == today for w in s.workouts)
+
+
+def test_later_start_clears_sessions_before_it(template):
+    athlete = Athlete("omer", date(2026, 10, 5), date(2026, 12, 27))
+    s = build_schedule(template, athlete)
+    today = date(2026, 10, 7)
+    rebuild(s, Athlete("omer", date(2026, 10, 19), date(2026, 12, 27)), today)
+    assert not [w for w in s.workouts if today <= w.date < date(2026, 10, 19)]
+    assert min(w.date for w in s.workouts if w.date >= today) >= date(2026, 10, 19)

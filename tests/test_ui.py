@@ -136,3 +136,15 @@ def test_calendar_sends_this_week_to_garmin(client):
     page = client.post("/garmin/send").text
     assert fake.uploaded and "Sync your watch" in page
     assert all(day >= TODAY.isoformat() for _, day in fake.scheduled)
+
+
+def test_start_date_stays_editable_after_setup(client):
+    client.post("/setup", data=FORM)
+    html = client.get("/setup").text
+    field = html.split('id="start_date"')[1].split(">")[0]
+    assert "disabled" not in field and "already started" not in html
+
+    client.post("/setup", data={**FORM, "start_date": TODAY.isoformat()})
+    store = api.app.dependency_overrides[api.get_store]()
+    assert store.load().athlete.start_date == TODAY
+    assert "Training now starts Mon 12 Oct" in client.post("/ui/preview", data={**FORM, "start_date": "2026-10-12"}).text
