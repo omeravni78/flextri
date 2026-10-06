@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import date
 from pathlib import Path
 
@@ -10,10 +11,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from ..garmin import push_schedule
-from ..garmin_account import GarminAccount, GarminLoginError
+from ..garmin_account import GarminAccount, GarminLoginError, library_problem
 from ..garmin_cleanup import delete_old, scan
 from ..storage import SqliteStore
 from . import api
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/garmin")
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
@@ -33,6 +36,7 @@ def _page(request: Request, account: GarminAccount, **ctx) -> HTMLResponse:
         "connected": account.connected,
         "waiting_for_code": account.waiting_for_code,
         "send_days": SEND_DAYS,
+        "library_problem": library_problem(),
         **ctx,
     })
 
@@ -78,6 +82,7 @@ def send(request: Request, account: GarminAccount = Depends(get_account),
     except GarminLoginError as e:
         return _page(request, account, error=str(e))
     except Exception as e:
+        log.exception("Garmin request failed")
         return _page(request, account, error=f"Garmin Connect refused the upload: {e}")
     added = sum(line.endswith(": added") for line in lines)
     title = (f"Sent {added} workout{'s' * (added != 1)}. Sync your watch to get them."
@@ -98,6 +103,7 @@ def cleanup(request: Request, account: GarminAccount = Depends(get_account), tod
     except GarminLoginError as e:
         return _page(request, account, error=str(e))
     except Exception as e:
+        log.exception("Garmin request failed")
         return _page(request, account, error=f"Couldn't read your Garmin workouts: {e}")
     return _page(request, account, cleanup={
         "old": len(report.old), "upcoming": report.upcoming, "unscheduled": report.unscheduled,
@@ -114,6 +120,7 @@ def cleanup_confirm(request: Request, account: GarminAccount = Depends(get_accou
     except GarminLoginError as e:
         return _page(request, account, error=str(e))
     except Exception as e:
+        log.exception("Garmin request failed")
         return _page(request, account, error=f"Garmin Connect stopped the clean-up: {e}")
     return _page(request, account, result={
         "title": f"Deleted {deleted} old workout{'s' * (deleted != 1)}. Sync your watch to free the space."})
