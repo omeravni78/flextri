@@ -60,6 +60,7 @@ form { margin: 0; }
     <h1>Garmin Connect</h1>
   </div>
 
+  {% if library_problem %}<div class="banner error" role="alert">{{ library_problem }}</div>{% endif %}
   {% if error %}<div class="banner error" role="alert">{{ error }}</div>{% endif %}
   {% if result %}
   <div class="banner done" role="status">

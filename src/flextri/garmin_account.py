@@ -11,16 +11,23 @@ Disconnecting deletes the tokens.
 
 from __future__ import annotations
 
+import logging
+import sys
 import time
 from pathlib import Path
 from typing import Any, Callable
 
 from . import paths
 
+log = logging.getLogger(__name__)
+
 TOKEN_FILE = "garmin_tokens.json"
 # Files older garminconnect releases (built on garth) wrote; removed on disconnect too.
 LEGACY_TOKEN_FILES = ("oauth1_token.json", "oauth2_token.json")
 CODE_TIMEOUT_S = 10 * 60
+# garminconnect keeps up with changes to Garmin's login. Releases after 0.3.2 need Python 3.12, so on
+# Python 3.11 pip silently stays on 0.3.2 (April 2026) and misses months of login fixes.
+MIN_LIBRARY = (0, 3, 17)
 
 
 class GarminLoginError(Exception):
@@ -39,14 +46,37 @@ def _garmin_factory(email: str | None = None, password: str | None = None) -> An
     return Garmin(email, password, return_on_mfa=True)
 
 
+def library_problem() -> str | None:
+    """Why Garmin login can't work in this install, or None. Shown on the Garmin page."""
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+        installed = version("garminconnect")
+    except PackageNotFoundError:
+        return "The Garmin library isn't installed. Start flexTri with run-windows.bat, or run: pip install -e \".[garmin]\""
+    numbers = tuple(int(n) for n in installed.split(".")[:3] if n.isdigit())
+    if numbers >= MIN_LIBRARY:
+        return None
+    if sys.version_info < (3, 12):
+        return (f"This flexTri runs on Python {sys.version_info[0]}.{sys.version_info[1]}, which only gets an old "
+                f"Garmin library ({installed}), missing months of fixes for Garmin's login. Install Python 3.12 or newer "
+                "from python.org, then start run-windows.bat again: it rebuilds flexTri on the new Python.")
+    return (f"The Garmin library is out of date ({installed}). Start run-windows.bat again to update it, "
+            "or run: pip install -U garminconnect")
+
+
+def _detail(e: Exception) -> str:
+    text = str(e).strip()
+    return text.splitlines()[0][:300] if text else type(e).__name__
+
+
 def _readable(e: Exception) -> str:
+    log.warning("Garmin login failed", exc_info=e)
     kind = type(e).__name__
     if "TooManyRequests" in kind:
         return "Garmin is limiting login attempts. Wait a few minutes and try again."
     if "Authentication" in kind:
-        return "Garmin didn't accept that. Check your email, password or code and try again."
-    first_line = str(e).strip().splitlines()[0] if str(e).strip() else kind
-    return f"Couldn't reach Garmin Connect: {first_line}"
+        return f"Garmin didn't accept that. Check your email, password or code and try again. (Garmin said: {_detail(e)})"
+    return f"Couldn't log in to Garmin Connect: {_detail(e)}"
 
 
 class GarminAccount:
@@ -119,8 +149,11 @@ class GarminAccount:
             garmin.login(str(self.tokens))
         except GarminLoginError:
             raise
-        except Exception:
-            raise GarminLoginError("Garmin signed flexTri out. Disconnect and connect again.") from None
+        except Exception as e:
+            log.warning("Garmin rejected the saved login", exc_info=e)
+            raise GarminLoginError(
+                f"Garmin didn't accept flexTri's saved login. Disconnect and connect again. (Garmin said: {_detail(e)})"
+            ) from None
         return garmin
 
     def disconnect(self) -> None:

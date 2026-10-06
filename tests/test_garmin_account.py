@@ -173,3 +173,28 @@ def test_page_asks_for_code(web, monkeypatch):
     page = web.post("/garmin/connect", data={"email": "me@x.com", "password": "right"}).text
     assert 'name="code"' in page
     assert "Garmin connected" in web.post("/garmin/code", data={"code": "123456"}).text
+
+
+def test_library_problem_explains_old_python(monkeypatch):
+    import sys
+    from importlib import metadata
+
+    from flextri import garmin_account
+
+    monkeypatch.setattr(metadata, "version", lambda name: "0.3.2")
+    monkeypatch.setattr(sys, "version_info", (3, 11, 9))
+    assert "Python 3.11" in garmin_account.library_problem()
+    monkeypatch.setattr(sys, "version_info", (3, 12, 4))
+    assert "out of date (0.3.2)" in garmin_account.library_problem()
+    monkeypatch.setattr(metadata, "version", lambda name: "0.3.17")
+    assert garmin_account.library_problem() is None
+
+
+def test_login_errors_say_what_garmin_said(account):
+    with pytest.raises(GarminLoginError, match="Garmin said: 401"):
+        account.connect("me@x.com", "wrong")
+
+
+def test_page_warns_about_old_library(web, monkeypatch):
+    monkeypatch.setattr(garmin_ui, "library_problem", lambda: "The Garmin library is out of date (0.3.2).")
+    assert "out of date (0.3.2)" in web.get("/garmin").text
