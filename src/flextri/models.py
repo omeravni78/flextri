@@ -115,6 +115,7 @@ class Athlete:
     long_ride_day: int | None = None
     long_run_day: int | None = None
     brick_day: int | None = None
+    look: str = "bigday"  # home screen look: bigday, lanes or chat (see today_view.LOOKS)
 
     def limit_for(self, weekday: int) -> int | None:
         specific = self.max_weekend_min if weekday in WEEKEND else self.max_weekday_min

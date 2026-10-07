@@ -34,7 +34,17 @@ pip install -e ".[dev]"
 uvicorn flextri.web.api:app --reload   # open http://127.0.0.1:8000
 ```
 On macOS or Linux, the same steps with `source .venv/bin/activate`.
-New athletes land on the 5-step setup wizard. After that, the home screen is the 4-week calendar: tap a day to
+New athletes land on the 5-step setup wizard. After that, the home screen is **Today**, in the look the athlete
+picked in the wizard's last step (switch any time from the bottom of the screen):
+
+- **One Big Day**: today's minutes big on a sport-colored field, a day strip, and the check-in under your thumb.
+- **Lane Lines**: today on top, the week below as pool lanes with each session drawn to its real length.
+- **Coach Chat**: the plan talks to you like a coach; your check-in is a quick reply.
+
+All three check in with one tap (Done, felt good / Done, felt hard / Cut it short / Skipped it) and show what that
+changed in the days ahead, before and after, with "Change my answer" to undo it.
+
+**Calendar** in the header is the 4-week calendar: tap a day to
 ease, swap, move or rest a session, check in, or log an extra session. "Edit my setup" reopens the wizard and shows
 what will change before saving. On a phone the calendar shows one week as a list with a 28-day strip on top.
 

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}My training · flexTri{% endblock %}
-{% block nav %}<nav style="display:flex;gap:14px"><a href="/setup">Edit my setup</a><a href="/garmin">Garmin</a>{% if finished %}<a href="/finish">Race summary</a>{% endif %}</nav>{% endblock %}
+{% block nav %}<nav style="display:flex;gap:14px"><a href="/">Today</a><a href="/setup">Edit my setup</a><a href="/garmin">Garmin</a>{% if finished %}<a href="/finish">Race summary</a>{% endif %}</nav>{% endblock %}
 {% block main %}
 <style>
 .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }

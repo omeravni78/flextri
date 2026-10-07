@@ -1,0 +1,169 @@
+{#- The Today screen in the athlete's chosen look. Context: t (today_view.build_today), look, result, banner. -#}
+{% macro choices(t) -%}
+{% for k, label in QUICK.items() %}<button type="button" hx-post="/ui/today/checkin" hx-vals='{"workout_id": "{{ t.waiting.id }}", "choice": "{{ k }}"}' hx-target="#today">{{ label }}</button>{% endfor %}
+{%- endmacro %}
+{% macro change_answer() -%}
+<button type="button" class="linkish" hx-post="/ui/today/undo" hx-target="#today">Change my answer</button>
+{%- endmacro %}
+{% macro banner_box() -%}
+{% if banner %}<div class="{{ 'msg-error' if banner.error else 'msg-ok' }}" role="status">{{ banner["items"] | join(" ") }}</div>{% endif %}
+{%- endmacro %}
+{% macro look_switch(look) -%}
+<form method="post" action="/look" class="looks" aria-label="Home screen look"><span>Look:</span>
+  {% for key, (name, _) in LOOKS.items() %}<button name="look" value="{{ key }}" aria-pressed="{{ 'true' if key == look else 'false' }}">{{ name }}</button>{% endfor %}
+</form>
+{%- endmacro %}
+{% macro garmin_button(cls) -%}
+<form method="post" action="/garmin/send"><button class="{{ cls }}">Send this week to Garmin</button></form>
+{%- endmacro %}
+{% set main = t.waiting or (t.today_sessions[0] if t.today_sessions else None) %}
+{% set first = t.today_sessions[0] if t.today_sessions else None %}
+{% set week_label %}{% if t.week_number %}Week {{ t.week_number }} of {{ t.total_weeks }}{% else %}Before your plan{% endif %}{% if t.phase %} · {{ t.phase | capitalize }}{% endif %}{% endset %}
+
+{% if look == "lanes" %}
+{# ================= Lane Lines ================= #}
+<div class="lk lk-lanes"><div class="wrap">
+  <div class="top"><span>{{ t.plan }}</span><span>{{ week_label }} · Race {{ t.race_date | day("%a %d %b") }}</span></div>
+  {{ banner_box() }}
+  {% if t.starts %}<div class="msg-ok">Your plan starts {{ t.starts | longday }}. Here is your first week.</div>{% endif %}
+  <section class="card2">
+    <div class="eyebrow">Today · {{ t.today | longday }}</div>
+    {% if main %}
+      <h1>{{ main.title }} <em>{{ main.minutes }}′</em>{% if main.key %}<span class="key">Key session</span>{% endif %}</h1>
+      <p>{{ main.description }}{% if main.description %}.{% endif %} Zone {{ main.zone }}.</p>
+      <div class="split">{% if main.parts %}{% for sport, m in main.parts %}<span class="sport-{{ sport }}" style="flex:{{ m }};background:var(--sport)">{{ sport | capitalize }} {{ m }}′</span>{% endfor %}{% else %}<span class="sport-{{ main.discipline }}" style="flex:1;background:var(--sport)">{{ main.title }} {{ main.minutes }}′</span>{% endif %}</div>
+      {% set others = t.today_sessions | rejectattr("id", "equalto", main.id) | list %}
+      {% if others %}<div class="also">Also today: {% for s in others %}{{ s.title | lower }} {{ s.minutes }}′{% if s.status != "planned" %} ({{ s.status }}){% endif %}{{ ", " if not loop.last }}{% endfor %}</div>{% endif %}
+      {% if result %}
+        <div class="result" role="status"><div><b>{{ result.title }}: {{ result.label | lower }}.</b> {{ result.summary }}</div>
+          {% for c in result.changes %}<div class="chg"><span class="tag">{{ c.day }}</span><s>{{ c.before }}</s><span>→ <b>{{ c.after }}</b></span></div>{% endfor %}
+          {{ change_answer() }}</div>
+      {% endif %}
+      {% if t.waiting %}
+        <div class="ask">How did the {{ t.waiting.title | lower }} go?</div>
+        <div class="choices">{{ choices(t) }}</div>
+      {% elif not result %}
+        <div class="result">All checked in for today.</div>
+      {% endif %}
+    {% else %}
+      <h1>Rest day</h1>
+      <p>Nothing planned today. Sleep, eat well, and get ready for the next session.</p>
+    {% endif %}
+  </section>
+  <section style="display:grid;gap:4px">
+    <h2>Your week, lane by lane</h2>
+    <div class="sum">{{ t.done_min | hm }} done of {{ t.planned_min | hm }} · bar length is session length</div>
+    <div class="rope" aria-hidden="true"></div>
+    {% for d in t.days %}
+    <div class="lane{{ ' is-today' if d.is_today }}">
+      <div class="day">{{ d.date | day("%a") }}<b>{{ d.date.day }}</b></div>
+      <div class="track">{% for s in d.sessions %}<div class="pill sport-{{ s.discipline }} s-{{ s.discipline }} {{ s.status }}{{ ' changed' if s.changed }}" style="flex:0 1 {{ (s.minutes / t.max_day_min * 100) | round(1) }}%" title="{{ s.title }} {{ s.minutes }}′, {{ s.status }}{% for a in s.adjustments %}; {{ a }}{% endfor %}">{% if s.minutes >= 40 %}{{ s.title }} {% endif %}{{ s.minutes }}′</div>{% else %}<span class="rest">{{ "Race day" if d.is_race_day else "Rest day" }}</span>{% endfor %}</div>
+      <div class="tot">{{ d.minutes | hm if d.minutes else "" }}</div>
+    </div>
+    <div class="rope" aria-hidden="true"></div>
+    {% endfor %}
+  </section>
+  <div class="foot">
+    <div class="legend"><span><i style="background:var(--swim)"></i>Swim</span><span><i style="background:var(--bike)"></i>Bike</span><span><i style="background:var(--run)"></i>Run</span><span><i style="background:var(--strength)"></i>Strength</span><span>Outlined: changed by a check-in</span></div>
+    {{ garmin_button("btn2") }}
+  </div>
+  {{ look_switch(look) }}
+</div></div>
+
+{% elif look == "chat" %}
+{# ================= Coach Chat ================= #}
+<div class="lk lk-chat"><div class="wrap">
+  <section>
+    <div class="head"><div class="av" aria-hidden="true">fT</div><div><b>flexTri coach</b><span>{{ t.plan }}, fitted to {{ t.total_weeks }} weeks</span></div></div>
+    <div class="feed">
+      {{ banner_box() }}
+      <div class="time">{{ t.today | longday }}</div>
+      {% set yd = t.yesterday | selectattr("status", "in", ["done", "partial"]) | list %}
+      <div class="msg">Morning {{ t.athlete }}.{% if t.starts %} Your plan starts {{ t.starts | longday }}.{% elif yd %} Yesterday’s {% for s in yd %}{{ s.title | lower }}{{ " and " if not loop.last }}{% endfor %} {{ "is" if yd | length == 1 else "are" }} logged.{% endif %}{% if t.week_number %} This is week {{ t.week_number }} of {{ t.total_weeks }}, {{ t.phase }} phase, {{ t.days_to_race }} days to race day.{% endif %}</div>
+      {% if first %}
+        <div class="msg">{% if first.key %}Today is a key session:{% else %}Here’s today:{% endif %}</div>
+        <div class="scard"><div class="hd"><b>{{ first.title }} · {{ first.minutes }}′</b><span>{{ "Key session" if first.key else "Zone " ~ first.zone }}</span></div>
+          <p>{{ first.description }}{% if first.description %}.{% endif %}</p>
+          {% if first.parts %}<div class="seg">{% for sport, m in first.parts %}<span style="flex:{{ m }};background:{{ '#F3E1C7' if sport == 'bike' else '#F6D0D4' }}">{{ sport | capitalize }} {{ m }}′</span>{% endfor %}</div>{% endif %}
+        </div>
+        {% set others = t.today_sessions[1:] %}
+        {% if others %}<div class="msg">Also on today: {% for s in others %}{{ s.title | lower }} {{ s.minutes }}′{{ ", " if not loop.last }}{% endfor %}.</div>{% endif %}
+        {% if t.waiting and not result %}<div class="msg">Tell me how the {{ t.waiting.title | lower }} went and I’ll adjust the rest of the week.</div>{% endif %}
+      {% else %}
+        <div class="msg">Today is a rest day. Nothing to do but recover.</div>
+      {% endif %}
+      {% if result %}
+        <div class="msg me">{{ result.title }}: {{ result.label | lower }}</div>
+        <div class="msg">{{ result.summary }}</div>
+        {% if result.changes %}<div class="diff">{% for c in result.changes %}<div><span class="d">{{ c.day }}</span><span><s>{{ c.before }}</s><br><ins>{{ c.after }}</ins></span></div>{% endfor %}</div>
+        <div class="msg">Want the updated week on your watch?</div>{% endif %}
+        {% if t.waiting %}<div class="msg">And how did the {{ t.waiting.title | lower }} ({{ t.waiting.minutes }}′) go?</div>{% endif %}
+      {% elif first and not t.waiting %}
+        <div class="msg">All checked in for today. Nice.</div>
+      {% endif %}
+    </div>
+    <div class="replies">
+      {% if result %}{% if result.changes %}{{ garmin_button("solid") }}{% endif %}<button type="button" hx-post="/ui/today/undo" hx-target="#today">Change my answer</button>{% endif %}
+      {% if t.waiting %}{{ choices(t) }}{% endif %}
+    </div>
+  </section>
+  <aside class="side"><h3>{{ week_label }}</h3>
+    {% for d in t.days %}
+      {% for s in d.sessions %}<div class="row{{ ' today' if d.is_today }}"><span class="dd">{{ d.date | day("%a") if loop.first }}</span><span class="ss{{ ' gone' if s.status in ('dropped', 'missed') }}">{{ s.title }}{% if s.status == "done" %} ✓{% elif s.status == "partial" %} ½{% endif %}{% if s.changed and s.status == "planned" %}<span class="ch">changed</span>{% endif %}</span><span class="mm">{{ s.minutes }}′</span></div>
+      {% else %}<div class="row{{ ' today' if d.is_today }}"><span class="dd">{{ d.date | day("%a") }}</span><span class="ss" style="color:var(--quiet2)">{{ "Race day" if d.is_race_day else "Rest" }}</span><span></span></div>{% endfor %}
+    {% endfor %}
+    <div class="race">{{ t.done_min | hm }} of {{ t.planned_min | hm }} done · race day {{ t.race_date | day("%a %d %b") }}</div>
+  </aside>
+  <div class="foot">{{ look_switch(look) }}<a href="/calendar">Full calendar</a></div>
+</div></div>
+
+{% else %}
+{# ================= One Big Day ================= #}
+{% set sel = t.selected %}
+{% set shown = sel.sessions | rejectattr("status", "equalto", "dropped") | list %}
+{% set big = (t.waiting if sel.is_today and t.waiting else (shown[0] if shown else None)) %}
+<div class="lk lk-bigday"><div class="wrap">
+  <div class="top"><span>{{ week_label }}</span><span>{% if t.finished %}Race day is here{% else %}{{ t.days_to_race }} days to race{% endif %}</span></div>
+  {{ banner_box() }}
+  <nav class="days" aria-label="This week">
+    {% for d in t.days %}
+      {% set real = d.sessions | rejectattr("status", "equalto", "dropped") | list %}
+      {% set st = real | map(attribute="status") | list %}
+      <button type="button" hx-get="/ui/today?day={{ d.date }}" hx-target="#today" aria-pressed="{{ 'true' if d.date == sel.date else 'false' }}" aria-label="{{ d.date | longday }}">{{ "Today" if d.is_today else d.date | day("%a") }}<b>{{ d.date.day }}</b><i class="{% if 'missed' in st %}missed{% elif 'partial' in st %}partial{% elif 'planned' in st %}planned{% elif 'done' in st %}done{% endif %}"></i></button>
+    {% endfor %}
+  </nav>
+  {% if big %}
+    <div class="hero" style="--field: var(--f-{{ big.discipline }})">
+      <div class="when">{{ "Today, " if sel.is_today }}{{ sel.date | longday }}</div>
+      {% if big.status == "done" %}<span class="flag">Done</span>{% elif big.status == "missed" %}<span class="flag">Skipped</span>{% elif big.status == "partial" %}<span class="flag">Cut short</span>{% elif big.changed %}<span class="flag">Changed by a check-in</span>{% endif %}
+      <div class="big">{{ big.minutes }}<small>min</small></div>
+      <div class="name">{{ big.title }}{% if big.key %}<span class="k">Key</span>{% endif %}</div>
+      {% if big.parts %}<div class="steps">{% for sport, m in big.parts %}<span>{{ sport | capitalize }} {{ m }}′</span>{% endfor %}</div>{% else %}<div class="steps"><span>Zone {{ big.zone }}</span></div>{% endif %}
+      <p class="detail">{{ big.description }}{% if big.description %}.{% endif %}</p>
+      {% set rest = shown | rejectattr("id", "equalto", big.id) | list %}
+      {% if rest %}<div class="more">Plus {% for r in rest %}{{ r.title | lower }} {{ r.minutes }}′{% if r.status != "planned" %} ({{ r.status }}){% endif %}{{ ", " if not loop.last }}{% endfor %}</div>{% endif %}
+    </div>
+  {% else %}
+    <div class="hero" style="--field: var(--f-rest)">
+      <div class="when">{{ "Today, " if sel.is_today }}{{ sel.date | longday }}</div>
+      <div class="big">0<small>min</small></div>
+      <div class="name">{{ "Race day" if sel.is_race_day else "Rest day" }}</div>
+      <p class="detail">{% if sel.is_race_day %}Good luck out there.{% elif t.starts and sel.date < t.starts %}Your plan starts {{ t.starts | longday }}.{% else %}Nothing planned. Sleep, eat well, and get ready for the next session.{% endif %}</p>
+    </div>
+  {% endif %}
+  {% if sel.is_today %}
+    {% if result %}
+      <div class="result" role="status"><div><b>{{ result.title }}: {{ result.label | lower }}.</b> {{ result.summary }}</div>
+        {% for c in result.changes %}<div class="chg">{{ c.day }}: <s>{{ c.before }}</s> → <b>{{ c.after }}</b></div>{% endfor %}
+        {{ change_answer() }}</div>
+    {% endif %}
+    {% if t.waiting %}
+      <div class="ask">{{ "And the " ~ t.waiting.title | lower ~ "?" if result else "How did it go?" }}</div>
+      <div class="choices">{{ choices(t) }}</div>
+    {% endif %}
+  {% endif %}
+  <div class="week"><div>This week: {{ t.done_min | hm }} of {{ t.planned_min | hm }}</div><div class="bar"><span style="width:{{ ((t.done_min / t.planned_min * 100) if t.planned_min else 0) | round(1) }}%"></span></div></div>
+  <div class="foot">{{ garmin_button("btn2") }}<a href="/calendar">Full calendar</a></div>
+  {{ look_switch(look) }}
+</div></div>
+{% endif %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ "Edit my setup" if editing else "Welcome" }} · flexTri{% endblock %}
-{% block nav %}{% if editing %}<a href="/">Back to calendar</a>{% endif %}{% endblock %}
+{% block nav %}{% if editing %}<a href="/">Back to today</a>{% endif %}{% endblock %}
 {% block main %}
 <style>
 .wizard { max-width: 640px; margin: 0 auto; }
@@ -17,6 +17,15 @@
 .plan-option { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; margin: 0; }
 .plan-option:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .plan-option > span { display: flex; flex-direction: column; gap: 2px; }
+.looks-pick { display: grid; gap: 8px; }
+.look-option { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; margin: 0; }
+.look-option:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.look-option > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.look-swatch { flex: none; width: 54px; height: 54px; border-radius: 10px; display: grid; gap: 3px; padding: 7px; align-content: center; }
+.look-swatch i { display: block; height: 7px; border-radius: 4px; }
+.look-bigday { background: #EEF3E6; } .look-bigday i:first-child { height: 26px; background: linear-gradient(160deg, #D3ECB0 0 58%, #FFD5C6 58%); } .look-bigday i:nth-child(2) { background: #16251A; width: 70%; } .look-bigday i:nth-child(3) { display: none; }
+.look-lanes { background: #E6F4F6; } .look-lanes i:nth-child(1) { background: #1B86A8; width: 60%; } .look-lanes i:nth-child(2) { background: #2F9466; width: 90%; } .look-lanes i:nth-child(3) { background: #E06A55; width: 45%; }
+.look-chat { background: #F2F0F7; } .look-chat i { height: 9px; background: #fff; width: 75%; } .look-chat i:nth-child(2) { background: #1E7A70; width: 55%; justify-self: end; }
 input[type=text], input[type=date], input[type=number], select { width: 100%; }
 </style>
 <div class="wizard">
@@ -113,6 +122,15 @@ input[type=text], input[type=date], input[type=number], select { width: 100%; }
       <div class="step-label">Step 5 of 5</div>
       <h2>Review</h2>
       <div id="review"><p class="hint">Working it out…</p></div>
+      <h3 id="look">Your home screen</h3>
+      <p class="hint">How flexTri shows your day. You can switch any time from the home screen.</p>
+      <div class="looks-pick">
+        {% for key, (name, idea) in LOOKS.items() %}
+        <label class="look-option"><input type="radio" name="look" value="{{ key }}" {{ "checked" if v.look == key }}>
+          <span class="look-swatch look-{{ key }}" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span><strong>{{ name }}</strong><span class="hint">{{ idea }}</span></span></label>
+        {% endfor %}
+      </div>
     </section>
 
     <div id="errors" role="alert"></div>

@@ -48,7 +48,8 @@ def test_wizard_to_calendar_and_day_actions(client):
     assert r.headers["HX-Redirect"] == "/?saved=1"
     home = client.get("/?saved=1").text
     assert "Week 1 of 13" in home and "Your setup is saved." in home
-    assert home.index(">Sun<") < home.index(">Mon<")  # week starts Sunday
+    cal = client.get("/calendar").text
+    assert cal.index(">Sun<") < cal.index(">Mon<")  # week starts Sunday
 
     wid = _key_id(client, "2026-10-07")
     html = client.post("/ui/day/2026-10-07/action", data={"kind": "easier", "workout_id": wid}).text
@@ -80,7 +81,7 @@ def test_wizard_offers_plans_and_builds_the_chosen_one(client):
     form = {**FORM, "plan": "olympic_8week_triathlete"}
     assert "Triathlete.com 8-week Olympic plan" in client.post("/ui/preview", data=form).text
     assert client.post("/setup", data=form).headers["HX-Redirect"] == "/?saved=1"
-    cal = client.get("/").text
+    cal = client.get("/calendar").text
     assert "Triathlete.com 8-week Olympic plan" in cal and "Week 1 of" in cal
 
 
@@ -130,7 +131,7 @@ def test_calendar_sends_this_week_to_garmin(client):
             return fake
 
     client.post("/setup", data={**FORM, "plan": "olympic_8week_triathlete"})
-    cal = client.get("/").text
+    cal = client.get("/calendar").text
     assert 'href="/garmin"' in cal and 'action="/garmin/send"' in cal
     api.app.dependency_overrides[garmin_ui.get_account] = lambda: Connected()
     page = client.post("/garmin/send").text

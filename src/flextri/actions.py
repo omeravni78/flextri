@@ -39,10 +39,16 @@ def alternatives(workout: Workout) -> dict[str, list[Workout]]:
     return {"easier": [easier], "swaps": swaps}
 
 
+def snapshot(schedule: Schedule) -> None:
+    """Remember the workouts (and check-ins) so the next change can be undone."""
+    _snapshot(schedule)
+
+
 def _snapshot(schedule: Schedule) -> None:
     schedule.history.append({
         "workouts": _encode([asdict(w) for w in schedule.workouts]),
         "actions": len(schedule.actions),
+        "checkins": len(schedule.checkins),
     })
     del schedule.history[:-HISTORY_LIMIT]
 
@@ -170,6 +176,8 @@ def undo(schedule: Schedule) -> list[str]:
     schedule.workouts = workouts_from_list(snap["workouts"])
     undone = schedule.actions[snap["actions"]:]
     del schedule.actions[snap["actions"]:]
+    if "checkins" in snap:
+        del schedule.checkins[snap["checkins"]:]
     return [f"Undid {a.kind} on {nice_date(a.date)}" for a in undone] or ["Undone"]
 
 
