@@ -46,21 +46,27 @@ def _garmin_factory(email: str | None = None, password: str | None = None) -> An
     return Garmin(email, password, return_on_mfa=True)
 
 
+def _run_script() -> str:
+    """The start script for this system; it builds .venv with the Garmin library."""
+    return "run-windows.bat" if sys.platform == "win32" else "./run-linux.sh"
+
+
 def library_problem() -> str | None:
     """Why Garmin login can't work in this install, or None. Shown on the Garmin page."""
     try:
         from importlib.metadata import PackageNotFoundError, version
         installed = version("garminconnect")
     except PackageNotFoundError:
-        return "The Garmin library isn't installed. Start flexTri with run-windows.bat, or run: pip install -e \".[garmin]\""
+        return (f"The Garmin library isn't installed. Start flexTri with {_run_script()}, "
+                "or run: pip install -e \".[garmin]\"")
     numbers = tuple(int(n) for n in installed.split(".")[:3] if n.isdigit())
     if numbers >= MIN_LIBRARY:
         return None
     if sys.version_info < (3, 12):
         return (f"This flexTri runs on Python {sys.version_info[0]}.{sys.version_info[1]}, which only gets an old "
                 f"Garmin library ({installed}), missing months of fixes for Garmin's login. Install Python 3.12 or newer "
-                "from python.org, then start run-windows.bat again: it rebuilds flexTri on the new Python.")
-    return (f"The Garmin library is out of date ({installed}). Start run-windows.bat again to update it, "
+                f"from python.org, then start {_run_script()} again: it rebuilds flexTri on the new Python.")
+    return (f"The Garmin library is out of date ({installed}). Start {_run_script()} again to update it, "
             "or run: pip install -U garminconnect")
 
 

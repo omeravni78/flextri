@@ -198,3 +198,19 @@ def test_login_errors_say_what_garmin_said(account):
 def test_page_warns_about_old_library(web, monkeypatch):
     monkeypatch.setattr(garmin_ui, "library_problem", lambda: "The Garmin library is out of date (0.3.2).")
     assert "out of date (0.3.2)" in web.get("/garmin").text
+
+
+def test_library_problem_names_the_start_script_for_this_system(monkeypatch):
+    import sys
+    from importlib import metadata
+
+    from flextri import garmin_account
+
+    def missing(name):
+        raise metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(metadata, "version", missing)
+    monkeypatch.setattr(sys, "platform", "linux")
+    assert "./run-linux.sh" in garmin_account.library_problem()
+    monkeypatch.setattr(sys, "platform", "win32")
+    assert "run-windows.bat" in garmin_account.library_problem()

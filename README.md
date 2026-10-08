@@ -25,6 +25,8 @@ Locally: `pip install -e ".[garmin,app,build]"`, then `python packaging/make_ico
 On Windows, double-click `run-windows.bat`. The first run creates a `.venv` folder and installs flexTri
 (Python 3.11+ from python.org is needed), then it opens http://127.0.0.1:8000 in your browser.
 Close the window, or press Quit in the app, to stop it.
+On Linux or macOS, run `./run-linux.sh` from the checkout: it does the same, Garmin library included
+(on Ubuntu, `sudo apt install python3-venv` first if creating the `.venv` fails).
 
 Or by hand, in PowerShell:
 ```
@@ -52,7 +54,7 @@ what will change before saving. On a phone the calendar shows one week as a list
 Open **Garmin** in the header (or press "Send this week to Garmin" on the calendar), log in with your Garmin
 Connect email and password, and enter the code if Garmin sends one. flexTri keeps only Garmin's login tokens,
 never your password. "Send this week to watch" uploads the next 7 days of planned sessions; sync your watch to
-get them. It needs the `garmin` extra: `pip install -e ".[garmin]"` (`run-windows.bat` installs it).
+get them. It needs the `garmin` extra: `pip install -e ".[garmin]"` (`run-windows.bat` and `run-linux.sh` install it).
 
 ## Web API (behind the wizard and calendar screens)
 ```
