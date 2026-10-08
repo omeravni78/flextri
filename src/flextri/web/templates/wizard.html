@@ -43,8 +43,8 @@ input[type=text], input[type=date], input[type=number], select { width: 100%; }
       <h2>Your race</h2>
       <div class="row">
         <div><label for="race_date">Race date</label><input id="race_date" name="race_date" type="date" value="{{ v.race_date }}" required></div>
-        <div><label for="start_date">Start training on</label><input id="start_date" name="start_date" type="date" value="{{ v.start_date }}" required {{ "disabled" if editing }}>
-          {% if editing %}<input type="hidden" name="start_date" value="{{ v.start_date }}"><div class="hint">Your block already started.</div>{% endif %}</div>
+        <div><label for="start_date">Start training on</label><input id="start_date" name="start_date" type="date" value="{{ v.start_date }}" required>
+          {% if editing %}<div class="hint">Pick a new date, even today, to restart the plan from it. Sessions you already logged stay.</div>{% endif %}</div>
       </div>
       <label>Distance</label>
       <div class="chips">

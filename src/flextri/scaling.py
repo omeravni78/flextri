@@ -294,12 +294,12 @@ def preview_rebuild(schedule: Schedule, athlete: Athlete, today: date) -> tuple[
     """What the future would look like with a new profile, and a plain list of what changes."""
     if schedule.template is None:
         raise ValueError("schedule has no template to rebuild from")
-    athlete = copy.deepcopy(athlete)
-    athlete.start_date = schedule.athlete.start_date  # the block started when it started
     fresh = [w for w in _schedule_workouts(schedule.template, athlete, schedule.next_id()) if w.date >= today]
     old = [w for w in schedule.workouts if w.date >= today and w.status == WorkoutStatus.PLANNED]
 
     changes = []
+    if athlete.start_date != schedule.athlete.start_date:
+        changes.append(f"Training now starts {athlete.start_date.strftime('%a %d %b')}")
     old_weeks = weeks_until(schedule.athlete.start_date, schedule.athlete.race_date, schedule.athlete.week_start)
     new_weeks = weeks_until(athlete.start_date, athlete.race_date, athlete.week_start)
     if new_weeks != old_weeks:
@@ -319,8 +319,6 @@ def rebuild(schedule: Schedule, athlete: Athlete, today: date) -> list[str]:
     fresh, changes = preview_rebuild(schedule, athlete, today)
     recorded = {WorkoutStatus.DONE, WorkoutStatus.PARTIAL, WorkoutStatus.MISSED}
     keep = [w for w in schedule.workouts if w.date < today or w.status in recorded]
-    athlete = copy.deepcopy(athlete)
-    athlete.start_date = schedule.athlete.start_date
-    schedule.athlete = athlete
+    schedule.athlete = copy.deepcopy(athlete)
     schedule.workouts = sorted(keep + fresh, key=lambda w: (w.date, w.id))
     return changes
