@@ -72,6 +72,7 @@ def athlete_from_dict(a: dict) -> Athlete:
         long_ride_day=a.get("long_ride_day"),
         long_run_day=a.get("long_run_day"),
         brick_day=a.get("brick_day"),
+        look=a.get("look", "bigday"),
     )
 
 

@@ -1,4 +1,4 @@
-"""HTML screens (Jinja + HTMX): the onboarding wizard, the 4-week calendar and the day panel."""
+"""HTML screens (Jinja + HTMX): the onboarding wizard, the Today screen (three looks), the 4-week calendar and the day panel."""
 
 from __future__ import annotations
 
@@ -11,11 +11,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 
-from .. import actions
+from .. import actions, today_view
 from ..adaptation import apply_checkin
 from ..calendar_view import build_calendar
 from ..ceremony import summarize
-from ..models import CheckIn, Discipline
+from ..models import CheckIn, DayAction, Discipline, WorkoutStatus
 from ..scaling import build_schedule, crowding_warning, fit_weeks, preview_rebuild, rebuild, week_first_day, weeks_until
 from ..storage import SqliteStore, load_template
 from . import api
@@ -35,6 +35,10 @@ def _fmt_day(value: str | date, pattern: str = "%a %d %b") -> str:
 templates.env.filters["day"] = _fmt_day
 templates.env.globals["DAY_NAMES"] = DAY_NAMES
 templates.env.filters["daynames"] = lambda days, ordered: ", ".join(DAY_NAMES[d] for d in ordered if d in days)
+templates.env.filters["hm"] = lambda m: f"{m // 60}h {m % 60:02d}" if m >= 60 and m % 60 else (f"{m // 60}h" if m >= 60 else f"{m}′")
+templates.env.filters["longday"] = lambda d: f"{d:%A} {d.day} {d:%B}"
+templates.env.globals["QUICK"] = today_view.QUICK
+templates.env.globals["LOOKS"] = today_view.LOOKS
 
 
 def _ordered_days(week_start: int) -> list[int]:
@@ -65,6 +69,7 @@ def _profile_from_form(form) -> tuple[api.ProfileIn | None, list[str]]:
         "brick_day": opt_int("brick_day"),
         "pool_days": [int(d) for d in form.getlist("pool_days")] or None,
         "plan": form.get("plan") or None,
+        "look": form.get("look") or today_view.DEFAULT_LOOK,
     }
     try:
         return api.ProfileIn(**data), []
@@ -167,6 +172,7 @@ def setup(request: Request, store: SqliteStore = Depends(api.get_store), today: 
         "long_ride_day": a.long_ride_day if a and a.long_ride_day is not None else 5,
         "long_run_day": a.long_run_day if a and a.long_run_day is not None else 6,
         "brick_day": a.brick_day if a and a.brick_day is not None else 1,
+        "look": a.look if a else today_view.DEFAULT_LOOK,
     }
     plans = _plan_choices()
     values["plan"] = plans[0]["id"]
@@ -222,14 +228,84 @@ async def save_setup(request: Request, store: SqliteStore = Depends(api.get_stor
     return response
 
 
-# ---------- calendar ----------
+# ---------- today (the home screen, in the athlete's chosen look) ----------
+
+def _today_ctx(store: SqliteStore, today: date, day: date | None = None, result: dict | None = None,
+               banner: dict | None = None) -> dict:
+    schedule = store.load()
+    look = schedule.athlete.look if schedule.athlete.look in today_view.LOOKS else today_view.DEFAULT_LOOK
+    return {"t": today_view.build_today(schedule, today, day), "look": look, "result": result, "banner": banner}
+
 
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request, saved: int = 0, store: SqliteStore = Depends(api.get_store), today: date = Depends(api.get_today)):
     if store.load() is None:
         return RedirectResponse("/setup", status_code=303)
     banner = _banner(["Your setup is saved."]) if saved else None
-    return templates.TemplateResponse(request, "calendar.html", _calendar_ctx(store, today, banner=banner))
+    return templates.TemplateResponse(request, "today.html", _today_ctx(store, today, banner=banner))
+
+
+@router.get("/ui/today", response_class=HTMLResponse)
+def today_partial(request: Request, day: date | None = None, store: SqliteStore = Depends(api.get_store),
+                  today: date = Depends(api.get_today)):
+    return templates.TemplateResponse(request, "_today.html", _today_ctx(store, today, day))
+
+
+@router.post("/ui/today/checkin", response_class=HTMLResponse)
+async def today_checkin(request: Request, store: SqliteStore = Depends(api.get_store), today: date = Depends(api.get_today)):
+    """One-tap check-in for today's session; answers with the screen plus what changed and why."""
+    form = await request.form()
+    schedule = store.load()
+    choice = form.get("choice", "")
+    try:
+        sw = schedule.get(int(form.get("workout_id") or 0))
+        if sw.date != today or sw.status != WorkoutStatus.PLANNED:
+            raise actions.ActionError("That session is already checked in")
+        checkin = today_view.quick_checkin(sw, choice, today)
+    except (KeyError, ValueError) as e:
+        msg = str(e) if isinstance(e, actions.ActionError) else "Pick how today's session went"
+        return templates.TemplateResponse(request, "_today.html", _today_ctx(store, today, banner=_banner([msg], True)))
+    before = today_view.snapshot(schedule, today)
+    actions.snapshot(schedule)
+    schedule.actions.append(DayAction(today, "check-in", sw.id))
+    notes = apply_checkin(schedule, checkin)
+    store.save(schedule)
+    changes = today_view.diff(schedule, before, today)
+    result = {"choice": choice, "label": today_view.QUICK[choice], "title": today_view.title(sw),
+              "summary": today_view.summary(choice, sw, changes, notes), "changes": changes}
+    return templates.TemplateResponse(request, "_today.html", _today_ctx(store, today, result=result))
+
+
+@router.post("/ui/today/undo", response_class=HTMLResponse)
+async def today_undo(request: Request, store: SqliteStore = Depends(api.get_store), today: date = Depends(api.get_today)):
+    schedule = store.load()
+    try:
+        actions.undo(schedule)
+        store.save(schedule)
+        banner = None
+    except actions.ActionError as e:
+        banner = _banner([str(e)], True)
+    return templates.TemplateResponse(request, "_today.html", _today_ctx(store, today, banner=banner))
+
+
+@router.post("/look")
+async def set_look(request: Request, store: SqliteStore = Depends(api.get_store)):
+    """Switch the home screen look without touching the plan."""
+    form = await request.form()
+    schedule = store.load()
+    if schedule is not None and form.get("look") in today_view.LOOKS:
+        schedule.athlete.look = form["look"]
+        store.save(schedule)
+    return RedirectResponse("/", status_code=303)
+
+
+# ---------- calendar ----------
+
+@router.get("/calendar", response_class=HTMLResponse)
+def full_calendar(request: Request, store: SqliteStore = Depends(api.get_store), today: date = Depends(api.get_today)):
+    if store.load() is None:
+        return RedirectResponse("/setup", status_code=303)
+    return templates.TemplateResponse(request, "calendar.html", _calendar_ctx(store, today))
 
 
 @router.get("/ui/calendar", response_class=HTMLResponse)
