@@ -1,3 +1,10 @@
+{% from "_garmin_send.html" import send_button %}
+{% macro week_send(w, label_now, label_later, cls="") -%}
+{% if w.days | selectattr("editable") | list %}
+  {% if w.days | selectattr("is_today") | list %}{{ send_button(label_now, cls, days=7, target="#garmin-out") }}
+  {% else %}{{ send_button(label_later, cls, start=w.first_day, days=7, target="#garmin-out") }}{% endif %}
+{% endif %}
+{%- endmacro %}
 {% set weekday_order = cal.weeks[0].days | map(attribute="weekday") | list %}
 {% if banner %}
 <div class="banner {{ 'error' if banner.error }}" role="status">
@@ -5,7 +12,7 @@
   {% if can_undo and not banner.error %}<button hx-post="/ui/undo" hx-vals='{"around": "{{ around }}"}' hx-target="#app">Undo</button>{% endif %}
 </div>
 {% endif %}
-<style>.plan-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; } .plan-row p { margin: 0; }</style>
+<style>.plan-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; } .plan-row p { margin: 0; } .plan-out:empty { display: none; } .plan-out { margin-bottom: 10px; } .weeklabel .gsend { margin-top: 6px; } .weeklabel .wsend { font-size: 12px; padding: 3px 8px; }</style>
 <div class="layout">
   <section>
     <div class="toolbar">
@@ -15,8 +22,9 @@
     </div>
     <div class="plan-row">
       <p class="hint plan-name">{{ cal.plan }}</p>
-      <form method="post" action="/garmin/send"><button type="submit">Send this week to Garmin</button></form>
+      {% set w0 = cal.weeks[0] %}{{ week_send(w0, "Send this week to Garmin", "Send week " ~ w0.number ~ " to Garmin" if w0.number else "Send this week to Garmin", "primary") }}
     </div>
+    <div id="garmin-out" class="plan-out" aria-live="polite"></div>
 
     <div class="strip" aria-label="Four weeks at a glance">
       {% for w in cal.weeks %}{% for d in w.days %}
@@ -35,6 +43,7 @@
           <strong>{% if w.number %}Week {{ w.number }}{% else %}{{ w.first_day | day("%d %b") }}{% endif %}</strong>
           <span class="hint">{{ w.phase or "" }}</span>
           {% if w.planned_min %}<span class="hint">{{ (w.done_min / 60) | round(1) }} of {{ (w.planned_min / 60) | round(1) }} h</span>{% endif %}
+          {% if wi > 0 and w.planned_min %}{{ week_send(w, "Send to Garmin", "Send to Garmin", "wsend") }}{% endif %}
         </div>
         {% for d in w.days %}
         <button class="cell{{ ' today' if d.is_today }}{{ ' past' if not d.editable and not d.is_today }}{{ ' later' if wi > 0 }}{{ ' selected' if panel and panel.day.isoformat() == d.date }}"

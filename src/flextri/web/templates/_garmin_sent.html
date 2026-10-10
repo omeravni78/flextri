@@ -1,0 +1,4 @@
+<div class="gsend-note{{ ' error' if error }}" role="status">
+  <b>{{ title }}</b>{% if connect %} <a href="/garmin">Connect Garmin</a>{% endif %}
+  {% if lines %}<details><summary>What went to Garmin</summary><ul>{% for l in lines %}<li>{{ l }}</li>{% endfor %}</ul></details>{% endif %}
+</div>

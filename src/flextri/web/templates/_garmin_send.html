@@ -1,0 +1,8 @@
+{#- A "send to Garmin" button that answers in place. Without HTMX it falls back to the Garmin page. -#}
+{% macro send_button(label, cls="", start=None, days=7, target="find .gsend-out") -%}
+<form class="gsend" method="post" action="/garmin/send" hx-post="/ui/garmin/send" hx-target="{{ target }}" hx-disabled-elt="find button"
+      hx-vals='{"start": "{{ start or "" }}", "days": "{{ days }}"}'>
+  <button type="submit" class="{{ cls }}"><span class="gsend-idle">{{ label }}</span><span class="gsend-busy">Sending to Garmin…</span></button>
+  {% if target == "find .gsend-out" %}<div class="gsend-out" aria-live="polite"></div>{% endif %}
+</form>
+{%- endmacro %}
