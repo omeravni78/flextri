@@ -1,0 +1,98 @@
+{#- The next days as Garmin Connect has them, in the athlete's look, with delete all or some.
+    Context: connected, days [(date, [GarminSession])], sessions, today, send_days, look, error, result, confirm. -#}
+{% macro tick(s) -%}
+<input class="tick" type="checkbox" name="ids" value="{{ s.schedule_id }}" aria-label="Select {{ s.title }}, {{ s.day | longday }}">
+{%- endmacro %}
+{% macro mins(s) -%}{{ s.minutes ~ "′" if s.minutes else "" }}{%- endmacro %}
+{% macro ext_tag(s) -%}{% if not s.from_flextri %}<span class="tag" title="Put on Garmin by you or another app">Not flexTri</span>{% endif %}{%- endmacro %}
+{% set heading = "Here’s what Garmin thinks your week will look like" %}
+{% set n = sessions | length %}
+{% set ext = sessions | rejectattr("from_flextri") | list | length %}
+{% set keep_note %}flexTri’s own workouts are deleted from Garmin. Ones you added yourself only come off the calendar and stay in your Garmin library.{% endset %}
+
+{% if connected %}
+<div class="wk">
+  {% if look != "chat" %}{% if error %}<div class="banner error" role="alert">{{ error }}</div>{% endif %}
+  {% if result %}<div class="banner done" role="status"><div class="strong">{{ result.title }}</div></div>{% endif %}{% endif %}
+
+  {% if days is none %}
+    {% if look == "chat" %}<div class="msg">I couldn’t read your Garmin calendar just now. {{ error }}</div>{% endif %}
+    <div class="bar"><button type="button" hx-get="/garmin/week" hx-target="#garmin-week">Try again</button></div>
+
+  {% elif confirm %}
+    {# ---------- step two: are you sure? ---------- #}
+    {% set k = confirm.sessions | length %}
+    {% if look == "chat" %}
+      <div class="msg me">{{ "Delete all of them" if confirm.all else "Delete " ~ ("this one" if k == 1 else "these " ~ k) }}</div>
+      <div class="msg">Sure? This takes {{ k }} session{{ "s" if k != 1 }} off Garmin and can’t be undone:</div>
+      <div class="scard">{% for s in confirm.sessions %}<div class="r sport-{{ s.sport }}"><span class="dd">{{ s.day | day("%a") }}</span><span><i class="dot"></i>{{ s.title }}{{ ext_tag(s) }}</span><span class="mm">{{ mins(s) }}</span><span></span></div>{% endfor %}</div>
+      <div class="msg">{{ keep_note }} Your recorded activities aren’t touched.</div>
+    {% else %}
+      <div class="card stack">
+        <h2>Delete {{ "all " if confirm.all }}{{ k }} session{{ "s" if k != 1 }} from Garmin?</h2>
+        <ul class="gone">{% for s in confirm.sessions %}<li class="sport-{{ s.sport }}"><b>{{ s.day | day("%a") }} {{ s.day.day }}</b> · {{ s.title }} {{ mins(s) }} {{ ext_tag(s) }}</li>{% endfor %}</ul>
+        <div class="small">{{ keep_note }} Your recorded activities aren’t touched. This can’t be undone.</div>
+      </div>
+    {% endif %}
+    <form class="bar" hx-post="/garmin/week/delete/confirm" hx-target="#garmin-week">
+      {% for s in confirm.sessions %}<input type="hidden" name="ids" value="{{ s.schedule_id }}">{% endfor %}
+      <button class="danger primary" type="submit">{{ "Yes, delete" if look == "chat" else "Delete " ~ k ~ " from Garmin" }}</button>
+      <button type="button" hx-get="/garmin/week" hx-target="#garmin-week">Keep them</button>
+    </form>
+
+  {% else %}
+    {# ---------- the week ---------- #}
+    {% if look == "chat" %}
+      {% if result %}<div class="msg">{{ result.title }}</div>{% endif %}
+      {% if error %}<div class="msg">{{ error }}</div>{% endif %}
+      {% if n %}
+        <div class="msg">{{ heading }}. {{ n }} session{{ "s" if n != 1 }} in the next {{ send_days }} days{% if ext %}, {{ ext }} of them not from me{% endif %}. Tick any you want gone.</div>
+      {% else %}
+        <div class="msg">Garmin has nothing scheduled for the next {{ send_days }} days. Send this week and I’ll put your sessions there.</div>
+      {% endif %}
+    {% else %}
+      <div>
+        <h2>{{ heading }}</h2>
+        <div class="sub">{% if n %}{{ n }} session{{ "s" if n != 1 }} on your Garmin calendar in the next {{ send_days }} days. Tick the ones to delete.{% else %}Garmin has nothing scheduled for the next {{ send_days }} days. Send this week to put flexTri’s sessions there.{% endif %}</div>
+      </div>
+    {% endif %}
+
+    {% if n %}
+    <form class="wkf" hx-post="/garmin/week/delete" hx-target="#garmin-week">
+      {% if look == "lanes" %}
+        <div class="lanes">
+          <div class="rope" aria-hidden="true"></div>
+          {% for day, items in days %}
+          <div class="lane{{ ' is-today' if day == today }}">
+            <div class="dn">{{ day | day("%a") }}<b>{{ day.day }}</b></div>
+            <div class="track">{% for s in items %}<label class="pill sport-{{ s.sport }}{{ ' ext' if not s.from_flextri }}" style="flex:{{ s.minutes or 45 }} 1 120px" title="{{ s.title }}{{ ' (not from flexTri)' if not s.from_flextri }}">{{ tick(s) }}<span>{{ s.title }} {{ mins(s) }}</span></label>{% else %}<span class="empty">Nothing on Garmin</span>{% endfor %}</div>
+          </div>
+          <div class="rope" aria-hidden="true"></div>
+          {% endfor %}
+        </div>
+        <div class="legend"><span><i style="background:var(--swim)"></i>Swim</span><span><i style="background:var(--bike)"></i>Bike</span><span><i style="background:var(--run)"></i>Run</span><span>Dashed: not from flexTri</span></div>
+      {% elif look == "chat" %}
+        <div class="scard">
+          {% for day, items in days %}{% for s in items %}
+          <label class="r sport-{{ s.sport }}{{ ' today' if day == today }}"><span class="dd">{{ day | day("%a") if loop.first }}</span><span><i class="dot"></i>{{ s.title }}{{ ext_tag(s) }}</span><span class="mm">{{ mins(s) }}</span>{{ tick(s) }}</label>
+          {% endfor %}{% endfor %}
+        </div>
+      {% else %}
+        <div>
+          {% for day, items in days %}
+          <div class="day{{ ' is-today' if day == today }}">
+            <div class="dn">{{ "Today" if day == today else day | day("%a") }}<b>{{ day.day }}</b></div>
+            <div class="tiles">{% for s in items %}<label class="tile sport-{{ s.sport }}">{% if s.minutes %}<span class="mm">{{ s.minutes }}<small>min</small></span>{% endif %}<span class="nm">{{ s.title }}</span>{% if not s.from_flextri %}<span>{{ ext_tag(s) }}</span>{% endif %}{{ tick(s) }}</label>{% else %}<div class="empty">Nothing on Garmin</div>{% endfor %}</div>
+          </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="bar">
+        <button type="submit">Delete selected</button>
+        <button class="primary" type="submit" name="all" value="1">Delete all {{ n }}</button>
+      </div>
+    </form>
+    {% endif %}
+  {% endif %}
+</div>
+{% endif %}
