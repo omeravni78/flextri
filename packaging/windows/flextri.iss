@@ -1,5 +1,5 @@
 ; Inno Setup script for the Windows installer. Build after PyInstaller:
-;   iscc /DAppVersion=0.1.0 packaging\windows\flextri.iss
+;   iscc /DAppVersion=0.2.0 packaging\windows\flextri.iss
 ; Installs for the current user only (no admin prompt) and adds Start menu and desktop shortcuts.
 ; The athlete's data lives in %LOCALAPPDATA%\flexTri and is kept on uninstall.
 
