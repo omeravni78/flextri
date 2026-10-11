@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page.url == "/" %}{{ site.title }}{% else %}{{ page.title }} · {{ site.title }}{% endif %}</title>
+<meta name="description" content="{{ page.description | default: site.description }}">
+<link rel="stylesheet" href="{{ '/assets/style.css' | relative_url }}">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="{{ '/' | relative_url }}">flex<span>Tri</span> <small>help</small></a>
+  <nav aria-label="Help pages">
+    {% for p in site.menu %}{% unless p.url == "/" %}<a href="{{ p.url | relative_url }}"{% if page.url == p.url %} aria-current="page"{% endif %}>{{ p.title }}</a>{% endunless %}{% endfor %}
+  </nav>
+</header>
+<main>
+{{ content }}
+{% assign i = 0 %}{% for p in site.menu %}{% if p.url == page.url %}{% assign i = forloop.index0 %}{% endif %}{% endfor %}
+{% assign prev = i | minus: 1 %}{% assign next = i | plus: 1 %}
+<nav class="pager" aria-label="Previous and next page">
+  {% if i > 0 %}<a href="{{ site.menu[prev].url | relative_url }}">← {{ site.menu[prev].title }}</a>{% else %}<span></span>{% endif %}
+  {% if site.menu[next] %}<a class="next" href="{{ site.menu[next].url | relative_url }}">{{ site.menu[next].title }} →</a>{% endif %}
+</nav>
+</main>
+<footer>flexTri runs on your own computer. <a href="https://github.com/omeravni78/flextri">Source on GitHub</a> · <a href="https://github.com/omeravni78/flextri/releases/latest">Download</a></footer>
+</body>
+</html>
