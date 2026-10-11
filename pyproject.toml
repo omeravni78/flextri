@@ -1,6 +1,6 @@
 [project]
 name = "flextri"
-version = "0.1.0"
+version = "0.2.0"
 description = "Flexible triathlon coaching: fit any plan to your timeline and adapt it daily."
 requires-python = ">=3.11"
 dependencies = ["fastapi>=0.110", "uvicorn>=0.29", "jinja2>=3.1", "python-multipart>=0.0.9", "platformdirs>=4"]
