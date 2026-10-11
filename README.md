@@ -10,6 +10,11 @@ athlete's real timeline, and adapt it every day from what they actually did.
    RPE, fatigue, soreness. Upcoming workouts adapt (`adaptation.py`).
 3. **Closing ceremony** (`flextri finish`): summary of the block (`ceremony.py`).
 
+## Help site
+User help with screenshots lives in `docs/` and is published to https://omeravni78.github.io/flextri/ by
+`.github/workflows/pages.yml` on every push to `develop` that touches it. To refresh the screenshots, run
+`python docs/tools/demo_server.py` and, in a second terminal, `python docs/tools/screenshots.py` (needs `playwright`).
+
 ## Install the app (no Python needed)
 Download flexTri for Windows, macOS or Linux from the
 [Releases page](https://github.com/omeravni78/flextri/releases) and follow [packaging/INSTALL.md](packaging/INSTALL.md).

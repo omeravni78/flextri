@@ -1,0 +1,15 @@
+title: flexTri help
+description: How flexTri fits a triathlon plan to your calendar and adapts it every day.
+baseurl: /flextri
+markdown: kramdown
+kramdown:
+  input: GFM
+exclude: [tools]
+menu:
+  - { url: /, title: Home }
+  - { url: /install.html, title: Install }
+  - { url: /setup.html, title: Setup }
+  - { url: /today.html, title: Today and check-ins }
+  - { url: /calendar.html, title: Calendar }
+  - { url: /garmin.html, title: Garmin }
+  - { url: /faq.html, title: Questions }
