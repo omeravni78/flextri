@@ -46,6 +46,15 @@ label { display: block; margin: 10px 0 4px; font-weight: 600; }
 .banner { border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; background: var(--accent-tint); display: flex; justify-content: space-between; gap: 12px; align-items: start; }
 .banner.error { background: color-mix(in srgb, var(--missed) 15%, var(--card)); }
 .banner ul { margin: 0; padding-left: 18px; }
+.gsend { margin: 0; display: grid; gap: 8px; justify-items: start; }
+.gsend .gsend-busy, .gsend.htmx-request .gsend-idle { display: none; }
+.gsend.htmx-request .gsend-busy { display: inline; }
+.gsend-out:empty { display: none; }
+.gsend-note { border-radius: 12px; padding: 10px 14px; font-size: 14px; line-height: 1.45; background: color-mix(in srgb, currentColor 8%, transparent); max-width: 52ch; text-align: left; }
+.gsend-note.error { background: #fde8e6; color: #8a1f14; }
+.gsend-note a { color: inherit; font-weight: 600; }
+.gsend-note details { margin-top: 4px; }
+.gsend-note ul { margin: 4px 0 0; padding-left: 18px; }
 .sport-swim { --sport: var(--swim); } .sport-bike { --sport: var(--bike); } .sport-run { --sport: var(--run); }
 .sport-strength { --sport: var(--strength); } .sport-brick { --sport: var(--brick); } .sport-rest { --sport: var(--quiet); }
 </style>

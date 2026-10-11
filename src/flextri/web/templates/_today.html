@@ -1,4 +1,5 @@
 {#- The Today screen in the athlete's chosen look. Context: t (today_view.build_today), look, result, banner. -#}
+{% from "_garmin_send.html" import send_button %}
 {% macro choices(t) -%}
 {% for k, label in QUICK.items() %}<button type="button" hx-post="/ui/today/checkin" hx-vals='{"workout_id": "{{ t.waiting.id }}", "choice": "{{ k }}"}' hx-target="#today">{{ label }}</button>{% endfor %}
 {%- endmacro %}
@@ -14,7 +15,7 @@
 </form>
 {%- endmacro %}
 {% macro garmin_button(cls) -%}
-<form method="post" action="/garmin/send"><button class="{{ cls }}">Send this week to Garmin</button></form>
+{{ send_button("Send this week to Garmin", cls) }}
 {%- endmacro %}
 {% set main = t.waiting or (t.today_sessions[0] if t.today_sessions else None) %}
 {% set first = t.today_sessions[0] if t.today_sessions else None %}
@@ -113,6 +114,7 @@
       {% else %}<div class="row{{ ' today' if d.is_today }}"><span class="dd">{{ d.date | day("%a") }}</span><span class="ss" style="color:var(--quiet2)">{{ "Race day" if d.is_race_day else "Rest" }}</span><span></span></div>{% endfor %}
     {% endfor %}
     <div class="race">{{ t.done_min | hm }} of {{ t.planned_min | hm }} done · race day {{ t.race_date | day("%a %d %b") }}</div>
+    <div class="send">{{ garmin_button("btn2") }}</div>
   </aside>
   <div class="foot">{{ look_switch(look) }}<a href="/calendar">Full calendar</a></div>
 </div></div>
