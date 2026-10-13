@@ -84,7 +84,7 @@ class ProfileIn(BaseModel):
 
 
 class ActionIn(BaseModel):
-    kind: Literal["easier", "swap", "move", "rest", "add"]
+    kind: Literal["easier", "swap", "move", "remove", "rest", "add"]
     workout_id: int | None = None
     discipline: Discipline | None = None
     new_date: date | None = None
@@ -172,6 +172,8 @@ def perform_action(schedule, day: date, a: ActionIn, today: date) -> list[str]:
         raise actions.ActionError("Pick a session")
     if a.kind == "easier":
         return actions.easier(schedule, a.workout_id, today)
+    if a.kind == "remove":
+        return actions.remove(schedule, a.workout_id, today)
     if a.kind == "swap":
         if a.discipline is None:
             raise actions.ActionError("Pick a sport to swap to")

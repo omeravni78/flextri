@@ -57,6 +57,11 @@ def test_wizard_to_calendar_and_day_actions(client):
     html = client.post("/ui/day/2026-10-07/action", data={"kind": "swap", "workout_id": wid, "discipline": "run"}).text
     assert "banner error" in html and "Key sessions" in html
     assert "Undid easier" in client.post("/ui/undo").text
+    panel = client.get("/ui/day/2026-10-07").text
+    assert 'value="remove"' in panel and "key session, so it won't move" in panel
+    html = client.post("/ui/day/2026-10-07/action", data={"kind": "remove", "workout_id": wid, "around": "2026-10-07"}).text
+    assert "Wed 7 Oct bike removed" in html and "removed by you" in html and "Undo" in html
+    assert "Undid remove" in client.post("/ui/undo").text
 
     html = client.post("/ui/day/2026-10-07/checkin", data={"workout_id": wid, "outcome": "done", "minutes": "60", "rpe": "9", "fatigue": "4"}).text
     assert "Checked in." in html and "Eased" in html

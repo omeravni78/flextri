@@ -22,6 +22,7 @@ Tap a day to open it. For each session you can:
 - **Easier version**: a shorter, gentler version of the same session.
 - **Swap**: change the sport, for example a run instead of a bike when your bike is in the shop. Easy sessions only.
 - **Move**: put it on another day in the same week.
+- **Remove**: take just this session off the day. Unlike Rest today, nothing moves, not even a key session. If you already sent the week to Garmin, delete it there too from the Garmin page.
 - **Check in**: the detailed check-in, with minutes, effort (1 to 10), tiredness and soreness (1 to 5) and notes.
 
 And for the whole day:
@@ -31,7 +32,7 @@ And for the whole day:
 
 Changed your mind? **Undo** at the top puts back the last change.
 
-<figure class="phone"><img src="img/calendar-day-panel.png" alt="The panel for Thursday 15 October with a swim and a run, each with Easier version, Swap and Move, and a Rest today button."></figure>
+<figure class="phone"><img src="img/calendar-day-panel.png" alt="The panel for Thursday 15 October with a swim and a run, each with Easier version, Swap, Move and Remove, and a Rest today button."></figure>
 
 ## On a phone
 
