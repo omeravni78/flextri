@@ -1,4 +1,4 @@
-"""What the athlete chooses to do on a calendar day: easier, swap, move, rest, add, undo.
+"""What the athlete chooses to do on a calendar day: easier, swap, move, remove, rest, add, undo.
 
 Every action snapshots the workouts first so the last one can be undone, and is
 logged as a DayAction. Each returns a plain list of what changed, for the banner.
@@ -129,6 +129,17 @@ def move(schedule: Schedule, workout_id: int, new_date: date, today: date) -> li
                 changes.append(f"Heads up: key sessions on {nice_date(min(d, new_date))} and {nice_date(max(d, new_date))} are back to back")
     schedule.actions.append(DayAction(new_date, "move", sw.id, str(old)))
     return changes
+
+
+def remove(schedule: Schedule, workout_id: int, today: date) -> list[str]:
+    """Drop one session from its day; the rest of the day and week stay as they are."""
+    sw = _planned(schedule, workout_id)
+    _not_past(sw.date, today)
+    _snapshot(schedule)
+    sw.status = WorkoutStatus.DROPPED
+    sw.adjustments.append("removed by you")
+    schedule.actions.append(DayAction(sw.date, "remove", sw.id))
+    return [f"{sw.label} removed"]
 
 
 def rest(schedule: Schedule, day: date, today: date) -> list[str]:
