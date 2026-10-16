@@ -42,6 +42,7 @@ def _page(request: Request, account: GarminAccount, **ctx) -> HTMLResponse:
     ctx.setdefault("result", None)
     return templates.TemplateResponse(request, "garmin.html", {
         "connected": account.connected,
+        "protection": account.protection() if account.connected else None,
         "waiting_for_code": account.waiting_for_code,
         "send_days": SEND_DAYS,
         "library_problem": library_problem(),

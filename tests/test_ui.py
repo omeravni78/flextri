@@ -130,6 +130,9 @@ def test_calendar_sends_this_week_to_garmin(client):
         def client(self):
             return fake
 
+        def protection(self):
+            return "Saved encrypted."
+
     client.post("/setup", data={**FORM, "plan": "olympic_8week_triathlete"})
     cal = client.get("/calendar").text
     assert 'href="/garmin"' in cal and 'action="/garmin/send"' in cal

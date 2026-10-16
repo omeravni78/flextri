@@ -10,7 +10,9 @@ ROOT = Path(SPECPATH).parent
 datas = collect_data_files("flextri")  # templates, static files, plans, icon
 hiddenimports = collect_submodules("uvicorn") + collect_submodules("flextri")
 binaries = []
-for pkg in ("garminconnect", "curl_cffi", "ua_generator"):
+# keyring finds its password-store backends through package metadata, so it is collected whole too.
+keyring_extras = {"win32": ["win32ctypes"], "darwin": []}.get(sys.platform, ["secretstorage", "jeepney"])
+for pkg in ("garminconnect", "curl_cffi", "ua_generator", "cryptography", "keyring", *keyring_extras):
     d, b, h = collect_all(pkg)
     datas += d
     binaries += b
