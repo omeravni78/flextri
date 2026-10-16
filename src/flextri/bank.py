@@ -1,15 +1,18 @@
-"""The workout bank: every session from every bundled plan, each with a code saying where it came from.
+"""The workout bank: every plan as a CSV file, every workout in it with a code saying where it came from.
 
 Plan code:    <race>_<plan weeks>_<source>       e.g. O_8_TRI (Olympic, 8 weeks, Triathlete.com)
 Workout code: <plan code>_W<week>_<discipline><n> e.g. O_8_TRI_W2_S1 (first swim of week 2)
 
 A source that publishes a second version of a plan gets a number on its source tag (O_8_TRI2).
-Codes are written into the plan file once by ``python -m flextri.bank code`` and never renumbered:
-a new session gets the next free number, so a code keeps pointing at the same workout. The code is
-only an ID; search the bank by its fields (race, weeks_to_race, discipline, ...), not by the code.
 
-    python -m flextri.bank code PLAN.json --source TRI   # add missing codes to a plan file
-    python -m flextri.bank check                         # validate codes in all bundled plans
+The plans folder holds ``plans.csv`` (one row per plan: code, name, race, weeks, source, notes) and one
+``<code>.csv`` per plan with a row per workout (see PLAN_COLUMNS). ``day`` is empty in day-free plans and
+0 (Mon) .. 6 (Sun) in plans with fixed days. Workout codes are filled in once by ``python -m flextri.bank
+code`` and never renumbered: a new row gets the next free number, so a code keeps pointing at the same
+workout. The code is only an ID; search the bank by its fields (race, weeks_to_race, discipline, ...).
+
+    python -m flextri.bank code PLANS/O_8_TRI.csv   # fill in missing workout codes
+    python -m flextri.bank check                    # validate every plan in the bank
     python -m flextri.bank list [--discipline swim] [--weeks-to-race 6] [--csv bank.csv]
 """
 
@@ -17,7 +20,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 import re
 import sys
 from collections import Counter
@@ -27,6 +29,9 @@ from pathlib import Path
 from . import paths
 from .models import Discipline, Distance
 
+INDEX = "plans.csv"
+INDEX_COLUMNS = ["code", "name", "race", "weeks", "source", "notes"]
+PLAN_COLUMNS = ["code", "week", "phase", "day", "slot", "discipline", "duration_min", "intensity", "key", "description"]
 RACE_LETTERS = {Distance.SPRINT: "S", Distance.OLYMPIC: "O", Distance.HALF: "H", Distance.FULL: "I"}
 DISCIPLINE_LETTERS = {
     Discipline.SWIM: "S", Discipline.BIKE: "B", Discipline.RUN: "R",
@@ -58,29 +63,91 @@ def plan_code(race: Distance, weeks: int, source: str) -> str:
     return f"{RACE_LETTERS[race]}_{weeks}_{source.upper()}"
 
 
-def _week_sessions(week: dict) -> list[dict]:
-    """A week's sessions in file order: fixed days first (by day), then day-free sessions."""
+def plans_dir() -> Path:
+    return Path(paths.bundled("plans"))
+
+
+def plan_files(directory: Path | None = None) -> list[Path]:
+    """The plan CSVs in a folder (everything but the index)."""
+    directory = Path(directory or plans_dir())
+    return sorted(p for p in directory.glob("*.csv") if p.name != INDEX) if directory.is_dir() else []
+
+
+def read_index(directory: Path) -> dict[str, dict]:
+    path = Path(directory) / INDEX
+    if not path.is_file():
+        return {}
+    with open(path, newline="", encoding="utf-8") as f:
+        return {row["code"]: row for row in csv.DictReader(f)}
+
+
+def read_plan(path: Path) -> dict:
+    """A plan CSV (plus its row in plans.csv) as a plan dict: name, code, race, source, notes, weeks."""
+    path = Path(path)
+    info = read_index(path.parent).get(path.stem)
+    if info is None:
+        raise ValueError(f"{path.name}: no row for {path.stem} in {INDEX}")
+    with open(path, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    n = int(info["weeks"])
+    weeks = [{"phase": None, "sessions": [], "days": {}} for _ in range(n)]
+    for i, r in enumerate(rows, start=2):
+        if not 1 <= int(r["week"]) <= n:
+            raise ValueError(f"{path.name} line {i}: week {r['week']} is outside 1..{n}")
+        week = weeks[int(r["week"]) - 1]
+        if week["phase"] not in (None, r["phase"]):
+            raise ValueError(f"{path.name} line {i}: week {r['week']} has phases {week['phase']} and {r['phase']}")
+        week["phase"] = r["phase"]
+        session = {
+            "discipline": r["discipline"], "duration_min": int(r["duration_min"]),
+            "intensity": int(r["intensity"] or 2), "description": r["description"],
+            "key": r["key"].strip().lower() in ("1", "true", "yes", "y"),
+            "slot": r["slot"] or None, "code": r["code"] or None,
+        }
+        if r["day"].strip():
+            week["days"].setdefault(str(int(r["day"])), []).append(session)
+        else:
+            week["sessions"].append(session)
+    if empty := [str(i) for i, w in enumerate(weeks, start=1) if w["phase"] is None]:
+        raise ValueError(f"{path.name}: no workouts in week(s) {', '.join(empty)}")
+    return {"name": info["name"], "code": info["code"], "race": info["race"], "source": info["source"],
+            "notes": info["notes"], "weeks": weeks}
+
+
+def write_plan(plan: dict, path: Path) -> None:
+    """Write a plan's workouts to its CSV (the plans.csv row is kept by hand)."""
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=PLAN_COLUMNS)
+        writer.writeheader()
+        for i, week in enumerate(plan["weeks"], start=1):
+            for day, s in _week_sessions(week):
+                writer.writerow({
+                    "code": s.get("code") or "", "week": i, "phase": week["phase"], "day": day,
+                    "slot": s.get("slot") or "", "discipline": s["discipline"], "duration_min": s["duration_min"],
+                    "intensity": s.get("intensity", 2), "key": "yes" if s.get("key") else "",
+                    "description": s.get("description", ""),
+                })
+
+
+def _week_sessions(week: dict) -> list[tuple[str, dict]]:
+    """A week's sessions in file order as (day, session): fixed days first (by day), then day-free ones."""
     days = week.get("days", {})
-    return [s for day in sorted(days, key=int) for s in days[day]] + week.get("sessions", [])
+    return [(d, s) for d in sorted(days, key=int) for s in days[d]] + [("", s) for s in week.get("sessions", [])]
 
 
-def assign_codes(plan: dict, source: str | None = None) -> int:
-    """Give the plan and every session without a code their code, in place. Returns how many were added.
+def assign_codes(plan: dict) -> int:
+    """Give every session without a code its code, in place. Returns how many were added.
 
     Existing codes are kept as they are; a new session takes the next free number for its
     discipline in that week, so nothing already in the bank is renumbered.
     """
-    if not plan.get("code"):
-        if not source:
-            raise ValueError("plan has no code yet: pass the source tag, e.g. --source TRI")
-        plan["code"] = plan_code(Distance(plan["race"]), len(plan["weeks"]), source)
     added = 0
     for i, week in enumerate(plan["weeks"], start=1):
-        sessions = _week_sessions(week)
+        sessions = [s for _, s in _week_sessions(week)]
         prefix = f"{plan['code']}_W{i}_"
         taken = Counter()
         for s in sessions:
-            if s.get("code", "").startswith(prefix):
+            if (s.get("code") or "").startswith(prefix):
                 m = re.fullmatch(r"([A-Z])(\d+)", s["code"][len(prefix):])
                 if m:
                     taken[m[1]] = max(taken[m[1]], int(m[2]))
@@ -95,9 +162,7 @@ def assign_codes(plan: dict, source: str | None = None) -> int:
 
 def check_plan(plan: dict) -> list[str]:
     """Problems with a plan's codes; an empty list means it is ready for the bank."""
-    code = plan.get("code")
-    if not code:
-        return ["plan has no code"]
+    code = plan["code"]
     problems = []
     if not PLAN_CODE.match(code):
         problems.append(f"plan code {code} is not <race>_<weeks>_<source>")
@@ -107,7 +172,7 @@ def check_plan(plan: dict) -> list[str]:
         problems.append(f"plan code {code} does not match race {plan['race']} and {len(plan['weeks'])} weeks")
     seen = set()
     for i, week in enumerate(plan["weeks"], start=1):
-        for s in _week_sessions(week):
+        for _, s in _week_sessions(week):
             c = s.get("code")
             letter = DISCIPLINE_LETTERS[Discipline(s["discipline"])]
             if not c:
@@ -130,24 +195,17 @@ def bank_from_plan(plan: dict) -> list[BankWorkout]:
             intensity=s.get("intensity", 2), key=s.get("key", False), description=s.get("description", ""),
         )
         for i, week in enumerate(plan["weeks"], start=1)
-        for s in _week_sessions(week)
+        for _, s in _week_sessions(week)
     ]
 
 
-def plans_dir() -> Path:
-    return Path(paths.bundled("plans"))
-
-
 def load_bank(directory: Path | None = None) -> list[BankWorkout]:
-    """Every workout from every plan in the folder. Raises if a plan's codes are missing or clash."""
-    bank, owner = [], {}
-    for path in sorted((directory or plans_dir()).glob("*.json")):
-        plan = json.loads(path.read_text(encoding="utf-8"))
+    """Every workout from every plan in the folder. Raises if a plan's codes are missing or wrong."""
+    bank = []
+    for path in plan_files(directory):
+        plan = read_plan(path)
         if problems := check_plan(plan):
             raise ValueError(f"{path.name}: " + "; ".join(problems))
-        if plan["code"] in owner:
-            raise ValueError(f"{path.name}: plan code {plan['code']} is already used by {owner[plan['code']]}")
-        owner[plan["code"]] = path.name
         bank.extend(bank_from_plan(plan))
     return bank
 
@@ -159,22 +217,28 @@ def search(bank: list[BankWorkout], **filters) -> list[BankWorkout]:
 
 def _code(args: argparse.Namespace) -> int:
     path = Path(args.plan)
-    plan = json.loads(path.read_text(encoding="utf-8"))
-    added = assign_codes(plan, args.source)
-    plan = {"name": plan["name"], "code": plan["code"], **plan}  # keep the code near the top of the file
-    path.write_text(json.dumps(plan, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"{path.name}: plan {plan['code']}, {added} workout code(s) added")
+    plan = read_plan(path)
+    added = assign_codes(plan)
+    write_plan(plan, path)
+    print(f"{path.name}: {added} workout code(s) added")
     return 0
 
 
 def _check(args: argparse.Namespace) -> int:
     failed = False
-    for path in sorted(Path(args.dir or plans_dir()).glob("*.json")):
-        problems = check_plan(json.loads(path.read_text(encoding="utf-8")))
+    directory = Path(args.dir) if args.dir else plans_dir()
+    for path in plan_files(directory):
+        try:
+            problems = check_plan(read_plan(path))
+        except ValueError as e:
+            problems = [str(e)]
         print(f"{path.name}: {'ok' if not problems else ''}")
         for p in problems:
             print(f"  {p}")
         failed |= bool(problems)
+    for code in set(read_index(directory)) - {p.stem for p in plan_files(directory)}:
+        print(f"{INDEX}: {code} has no {code}.csv")
+        failed = True
     return 1 if failed else 0
 
 
@@ -197,11 +261,10 @@ def _list(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m flextri.bank", description="The workout bank.")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("code", help="add missing plan and workout codes to a plan file")
+    p = sub.add_parser("code", help="fill in missing workout codes in a plan CSV")
     p.add_argument("plan")
-    p.add_argument("--source", help="short source tag for a plan with no code yet, e.g. TRI")
     p.set_defaults(func=_code)
-    p = sub.add_parser("check", help="check the codes in every plan")
+    p = sub.add_parser("check", help="check every plan in the bank")
     p.add_argument("--dir", help="plans folder (default: the bundled plans)")
     p.set_defaults(func=_check)
     p = sub.add_parser("list", help="list or export bank workouts")
