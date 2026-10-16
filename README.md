@@ -91,17 +91,39 @@ pytest
 ```
 
 ## Plans
-Plans in `src/flextri/data/plans/` are offered in the setup wizard. `olympic_8week_triathlete.json` is Marilyn Chychota's free
-[8-week Olympic plan](https://www.triathlete.com/training/8-week-triathlon-training-plan-olympic-distance/) from
-Triathlete.com, with swims in meters.
+Plans live in `src/flextri/data/plans/` as CSV files and are offered in the setup wizard. `plans.csv` lists them
+(code, name, race, weeks, source, notes) and each plan is `<code>.csv` with one row per workout:
+`code, week, phase, day, slot, discipline, duration_min, intensity, key, description`. `O_8_TRI.csv` is Marilyn
+Chychota's free [8-week Olympic plan](https://www.triathlete.com/training/8-week-triathlon-training-plan-olympic-distance/)
+from Triathlete.com, with swims in meters.
 
-A plan week can be written two ways:
-- `"sessions"`: day-free. Each session has a `slot` (`swim`, `long_ride`, `long_run`, `brick`, `bike`, `run`,
-  `strength`, `pre_race`, `race`). The athlete picks the long ride, long run, brick and swim days in the wizard;
-  the rest is spread over their training days, at most 2 sessions a day and never the same sport twice in a day.
-  With fewer training days than the plan needs, the key sessions and at least one swim, bike and run stay, and
+A workout either has a `day` or not:
+- No `day` (day-free): the `slot` (`swim`, `long_ride`, `long_run`, `brick`, `bike`, `run`,
+  `strength`, `pre_race`, `race`) decides its day. The athlete picks the long ride, long run, brick and swim days in
+  the wizard; the rest is spread over their training days, at most 2 sessions a day and never the same sport twice in
+  a day. With fewer training days than the plan needs, the key sessions and at least one swim, bike and run stay, and
   the easiest sessions are left out (the wizard says how many days the full plan needs). The race goes on
   race day and `pre_race` sessions the day before.
-- `"days"`: fixed weekdays (`"0"` = Monday). Sessions move only when that day isn't a training day.
+- `day` `0` (Monday) to `6` (Sunday): a fixed weekday. Sessions move only when that day isn't a training day.
+
+### Workout bank and codes
+All plan CSVs together are the workout bank. Every plan and every workout has a code, so a workout can always be
+traced back to its plan:
+- Plan: `<race>_<plan weeks>_<source>`, e.g. `O_8_TRI` (Olympic, 8 weeks, Triathlete.com). Race letters:
+  `S` sprint, `O` olympic, `H` 70.3, `I` full. A second version of a plan from the same source adds a number (`O_8_TRI2`).
+- Workout: `<plan code>_W<week>_<discipline><n>`, e.g. `O_8_TRI_W2_S3` is the third swim of week 2. Discipline
+  letters: `S` swim, `B` bike, `R` run, `G` strength, `X` brick, `Z` rest.
+
+To add a plan, send Claude the plan as text or a screenshot: `.claude/skills/add-plan/SKILL.md` has the steps it
+follows. By hand: add its row to `plans.csv`, write `<code>.csv` with the `code` column empty, then fill the codes in.
+Codes are written once and never renumbered; a row added later gets the next free number.
+
+    python -m flextri.bank code src/flextri/data/plans/NEW_CODE.csv   # fill in the workout codes
+    python -m flextri.bank check                                     # check every plan
+    python -m flextri.bank list --discipline swim --weeks-to-race 6  # search the bank
+    python -m flextri.bank list --csv bank.csv                       # whole bank in one spreadsheet
+
+Each bank workout also has its plan, week, weeks to race, phase, discipline, slot, duration, intensity and key flag,
+so search by those fields; the code is only an ID.
 
 `src/flextri/data/examples/placeholder_plan.json` is a generic 4-week stand-in with fixed days, not real coaching content.

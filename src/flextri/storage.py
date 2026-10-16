@@ -42,10 +42,15 @@ def template_from_dict(d: dict) -> PlanTemplate:
         )
         for w in d["weeks"]
     ]
-    return PlanTemplate(name=d["name"], weeks=weeks)
+    return PlanTemplate(name=d["name"], weeks=weeks, code=d.get("code"))
 
 
 def load_template(path: Path) -> PlanTemplate:
+    """A plan from a bank CSV (see bank.py) or a JSON file."""
+    if Path(path).suffix == ".csv":
+        from .bank import read_plan
+
+        return template_from_dict(read_plan(path))
     return template_from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
 
 

@@ -45,6 +45,7 @@ class Workout:
     description: str = ""
     key: bool = False  # key sessions get rescheduled, not dropped, when missed
     slot: str | None = None  # in day-free plans: the role that decides its day (see SLOTS)
+    code: str | None = None  # where it came from in the workout bank, e.g. O_8_TRI_W2_S1 (see bank.py)
 
 
 # Roles a session can have in a day-free plan. The athlete picks the day for the
@@ -71,6 +72,7 @@ class PlanTemplate:
 
     name: str
     weeks: list[TemplateWeek]
+    code: str | None = None  # plan code in the workout bank, e.g. O_8_TRI (see bank.py)
 
     @property
     def length_weeks(self) -> int:

@@ -12,7 +12,7 @@ from flextri.web.garmin_week import window
 TODAY = date(2026, 10, 7)  # a Wednesday
 FORM = {
     "name": "omer", "experience": "some", "race_date": "2026-12-27", "start_date": "2026-10-04",
-    "distance": "olympic", "goal": "finish", "week_start": "6", "plan": "olympic_8week_triathlete",
+    "distance": "olympic", "goal": "finish", "week_start": "6", "plan": "O_8_TRI",
     "available_days": ["1", "2", "3", "5", "6"], "max_weekday_min": "", "max_weekend_min": "", "long_day": "",
 }
 
