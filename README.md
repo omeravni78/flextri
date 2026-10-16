@@ -114,7 +114,8 @@ traced back to its plan:
 - Workout: `<plan code>_W<week>_<discipline><n>`, e.g. `O_8_TRI_W2_S3` is the third swim of week 2. Discipline
   letters: `S` swim, `B` bike, `R` run, `G` strength, `X` brick, `Z` rest.
 
-To add a plan: add its row to `plans.csv`, write `<code>.csv` with the `code` column empty, then fill the codes in.
+To add a plan, send Claude the plan as text or a screenshot: `.claude/skills/add-plan/SKILL.md` has the steps it
+follows. By hand: add its row to `plans.csv`, write `<code>.csv` with the `code` column empty, then fill the codes in.
 Codes are written once and never renumbered; a row added later gets the next free number.
 
     python -m flextri.bank code src/flextri/data/plans/NEW_CODE.csv   # fill in the workout codes
