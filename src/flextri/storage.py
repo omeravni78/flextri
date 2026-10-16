@@ -42,7 +42,7 @@ def template_from_dict(d: dict) -> PlanTemplate:
         )
         for w in d["weeks"]
     ]
-    return PlanTemplate(name=d["name"], weeks=weeks)
+    return PlanTemplate(name=d["name"], weeks=weeks, code=d.get("code"))
 
 
 def load_template(path: Path) -> PlanTemplate:

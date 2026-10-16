@@ -105,3 +105,21 @@ A plan week can be written two ways:
 - `"days"`: fixed weekdays (`"0"` = Monday). Sessions move only when that day isn't a training day.
 
 `src/flextri/data/examples/placeholder_plan.json` is a generic 4-week stand-in with fixed days, not real coaching content.
+
+### Workout bank and codes
+Every plan and every workout in it has a code, so a workout can always be traced back to its plan:
+- Plan: `<race>_<plan weeks>_<source>`, e.g. `O_8_TRI` (Olympic, 8 weeks, Triathlete.com). Race letters:
+  `S` sprint, `O` olympic, `H` 70.3, `I` full. A second version of a plan from the same source adds a number (`O_8_TRI2`).
+- Workout: `<plan code>_W<week>_<discipline><n>`, e.g. `O_8_TRI_W2_S3` is the third swim of week 2. Discipline
+  letters: `S` swim, `B` bike, `R` run, `G` strength, `X` brick, `Z` rest.
+
+Codes are written into the plan file once and never renumbered. A plan file needs `"race"` (`sprint`, `olympic`,
+`70.3`, `full`); then:
+
+    python -m flextri.bank code src/flextri/data/plans/NEW_PLAN.json --source TP   # add the codes
+    python -m flextri.bank check                                                  # check all plans
+    python -m flextri.bank list --discipline swim --weeks-to-race 6               # search the bank
+    python -m flextri.bank list --csv bank.csv                                    # whole bank as a spreadsheet
+
+The bank is every workout from every plan, with its plan, week, weeks to race, phase, discipline, slot, duration,
+intensity and key flag as separate fields. Search by those fields; the code is only an ID.
