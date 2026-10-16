@@ -58,7 +58,8 @@ what will change before saving. On a phone the calendar shows one week as a list
 ## Send workouts to Garmin
 Open **Garmin** in the header (or press "Send this week to Garmin" on the calendar), log in with your Garmin
 Connect email and password, and enter the code if Garmin sends one. flexTri keeps only Garmin's login tokens,
-never your password. "Send this week to watch" uploads the next 7 days of planned sessions; sync your watch to
+never your password, and saves them encrypted: the key lives in Windows Credential Manager, the macOS Keychain
+or the Linux keyring (or, where there is none, in a `token.key` file only you can read). "Send this week to watch" uploads the next 7 days of planned sessions; sync your watch to
 get them. It needs the `garmin` extra: `pip install -e ".[garmin]"` (`run-windows.bat` and `run-linux.sh` install it).
 
 ## Web API (behind the wizard and calendar screens)
