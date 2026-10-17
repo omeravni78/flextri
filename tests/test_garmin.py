@@ -28,8 +28,8 @@ class FakeGarmin:
 
 def test_run_gets_warmup_main_cooldown_in_hr_zone():
     [p] = to_garmin_workouts(_sw(1, date(2026, 10, 6), Discipline.RUN, 40, 3, "tempo run"))
-    assert p["workoutName"] == "flexTri: tempo run"
-    assert p["sportType"]["sportTypeKey"] == "running"
+    assert p["workoutName"] == "RUN 40' tempo run · flexTri"
+    assert p["sportType"] == {"sportTypeId": 1, "sportTypeKey": "running", "displayOrder": 1}
     steps = p["workoutSegments"][0]["workoutSteps"]
     assert [s["stepType"]["stepTypeKey"] for s in steps] == ["warmup", "interval", "cooldown"]
     assert sum(s["endConditionValue"] for s in steps) == 40 * 60
@@ -41,11 +41,17 @@ def test_swim_has_no_hr_target_and_short_session_is_one_step():
     [step] = p["workoutSegments"][0]["workoutSteps"]
     assert step["targetType"]["workoutTargetTypeKey"] == "no.target"
     assert "zoneNumber" not in step
+    # id 3 is Garmin's "other" sport, which is why swims used to look like everything else
+    assert p["sportType"] == {"sportTypeId": 4, "sportTypeKey": "swimming", "displayOrder": 3}
+    assert p["poolLength"] == 25.0
+    assert p["workoutName"].startswith("SWIM 15' ")
 
 
 def test_brick_splits_into_ride_and_run_rest_is_skipped():
     bike, run = to_garmin_workouts(_sw(1, date(2026, 10, 6), Discipline.BRICK, 90, desc="brick"))
     assert (bike["estimatedDurationInSecs"], run["estimatedDurationInSecs"]) == (60 * 60, 30 * 60)
+    assert (bike["workoutName"], run["workoutName"]) == ("BIKE 60' brick · flexTri", "RUN 30' brick · flexTri")
+    assert bike["sportType"]["sportTypeKey"] == "cycling"
     assert to_garmin_workouts(_sw(2, date(2026, 10, 6), Discipline.REST, 0)) == []
 
 
@@ -57,10 +63,11 @@ def test_push_window_skips_done_and_already_scheduled():
         _sw(3, date(2026, 10, 7), Discipline.SWIM, 40, desc="easy swim"),
         _sw(4, date(2026, 10, 20), Discipline.RUN, 40, desc="later run"),
     ])
-    garmin = FakeGarmin([{"itemType": "workout", "date": "2026-10-07", "title": "flexTri: easy swim"}])
+    garmin = FakeGarmin([{"itemType": "workout", "date": "2026-10-07", "title": "SWIM 40' easy swim · flexTri"}])
     lines = push_schedule(schedule, garmin, date(2026, 10, 5), 7)
     assert garmin.scheduled == [(1, "2026-10-06")]
-    assert lines == ["2026-10-06 flexTri: tempo ride: added", "2026-10-07 flexTri: easy swim: already on Garmin"]
+    assert lines == ["2026-10-06 BIKE 60' tempo ride · flexTri: added",
+                     "2026-10-07 SWIM 40' easy swim · flexTri: already on Garmin"]
 
 
 def test_reads_schedule_from_web_app_database(tmp_path, monkeypatch, capsys):
@@ -73,7 +80,7 @@ def test_reads_schedule_from_web_app_database(tmp_path, monkeypatch, capsys):
     fake = FakeGarmin()
     monkeypatch.setattr(garmin, "_login", lambda: fake)
     garmin.main(["--db", str(db), "--start", "2026-10-05"])
-    assert "2026-10-06 flexTri: easy run: added" in capsys.readouterr().out
+    assert "2026-10-06 RUN 40' easy run · flexTri: added" in capsys.readouterr().out
     assert fake.scheduled == [(1, "2026-10-06")]
 
 
@@ -88,7 +95,7 @@ def test_export_writes_one_json_file_per_workout(tmp_path):
         _sw(2, date(2026, 10, 7), Discipline.REST, 0),
     ])
     paths = export_schedule(schedule, tmp_path / "out", date(2026, 10, 5), 7)
-    assert [p.name for p in paths] == ["2026-10-06_race-pace-brick-bike.json", "2026-10-06_race-pace-brick-run.json"]
+    assert [p.name for p in paths] == ["2026-10-06_bike-60-race-pace-brick.json", "2026-10-06_run-30-race-pace-brick.json"]
     assert json.loads(paths[0].read_text())["sportType"]["sportTypeKey"] == "cycling"
 
 
@@ -98,5 +105,14 @@ def test_test_mode_sends_one_easy_run_without_a_plan(tmp_path, monkeypatch, caps
     fake = FakeGarmin()
     monkeypatch.setattr(garmin, "_login", lambda: fake)
     garmin.main(["--test", "--db", str(tmp_path / "missing.db"), "--start", "2026-10-05"])
-    assert capsys.readouterr().out.strip() == "2026-10-05 flexTri: test run: added"
+    assert capsys.readouterr().out.strip() == "2026-10-05 RUN 20' test run · flexTri: added"
     assert fake.uploaded[0]["estimatedDurationInSecs"] == 20 * 60
+
+
+def test_flextri_names_old_and_new_are_recognised():
+    from flextri.garmin import is_flextri, short_title
+
+    assert is_flextri("RUN 40' tempo run · flexTri") and is_flextri("flexTri: tempo run")
+    assert not is_flextri("Morning run")
+    assert short_title("RUN 40' tempo run · flexTri") == "RUN 40' tempo run"
+    assert short_title("flexTri: tempo run") == "tempo run"
