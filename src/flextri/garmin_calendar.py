@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any, Iterable, Protocol
 
-from .garmin import NAME_PREFIX
+from .garmin import is_flextri, short_title
 
 SPORTS = {"running": "run", "cycling": "bike", "swimming": "swim", "strength_training": "strength"}
 
@@ -57,10 +57,10 @@ def _session(item: dict[str, Any]) -> GarminSession | None:
         schedule_id=int(item["id"]),
         workout_id=int(item["workoutId"]) if item.get("workoutId") else None,
         day=date.fromisoformat(item["date"][:10]),
-        title=title.removeprefix(NAME_PREFIX),
+        title=short_title(title),
         sport=SPORTS.get(item.get("sportTypeKey") or "", "other"),
         minutes=_minutes(item),
-        from_flextri=title.startswith(NAME_PREFIX),
+        from_flextri=is_flextri(title),
     )
 
 

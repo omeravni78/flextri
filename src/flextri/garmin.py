@@ -32,13 +32,23 @@ from typing import Any, Protocol
 
 from .models import Discipline, Schedule, ScheduledWorkout, Workout, WorkoutStatus
 
+# Names start with the sport so the watch's workout list, which cuts long names
+# short, shows "RUN", "BIKE" or "SWIM" first; the marker at the end tells
+# flexTri which Garmin workouts it owns. Workouts sent before the sport-first
+# names used NAME_PREFIX instead, so both are recognised.
+NAME_SUFFIX = " · flexTri"
 NAME_PREFIX = "flexTri: "
 
+# Garmin's workout sport ids (garminconnect.workout.SportType): id 3 is "other",
+# which showed swims with a generic icon. displayOrder follows Garmin's own payloads.
 _SPORTS = {
-    Discipline.RUN: (1, "running"),
-    Discipline.BIKE: (2, "cycling"),
-    Discipline.SWIM: (3, "swimming"),
+    Discipline.RUN: (1, "running", 1),
+    Discipline.BIKE: (2, "cycling", 2),
+    Discipline.SWIM: (4, "swimming", 3),
 }
+_SPORT_WORDS = {Discipline.RUN: "RUN", Discipline.BIKE: "BIKE", Discipline.SWIM: "SWIM"}
+# Garmin asks swim workouts for a pool length; flexTri plans count swims in meters.
+_POOL = {"poolLength": 25.0, "poolLengthUnit": {"unitId": 1, "unitKey": "meter", "factor": 100.0}}
 _STEP_TYPES = {"warmup": 1, "cooldown": 2, "interval": 3}
 BRICK_BIKE_SHARE = 2 / 3
 
@@ -49,6 +59,20 @@ class GarminClient(Protocol):
     def upload_workout(self, workout_json: dict[str, Any]) -> dict[str, Any]: ...
     def schedule_workout(self, workout_id: int | str, date_str: str) -> dict[str, Any]: ...
     def get_scheduled_workouts(self, year: int, month: int) -> dict[str, Any]: ...
+
+
+def workout_name(discipline: Discipline, minutes: int, label: str) -> str:
+    """Sport and length first, e.g. "RUN 40' tempo run · flexTri"."""
+    return f"{_SPORT_WORDS[discipline]} {minutes}' {label}{NAME_SUFFIX}"
+
+
+def is_flextri(title: str) -> bool:
+    return title.endswith(NAME_SUFFIX) or title.startswith(NAME_PREFIX)
+
+
+def short_title(title: str) -> str:
+    """A Garmin workout title without flexTri's marker."""
+    return title.removesuffix(NAME_SUFFIX).removeprefix(NAME_PREFIX)
 
 
 def _step(order: int, kind: str, minutes: int, zone: int | None) -> dict[str, Any]:
@@ -81,17 +105,20 @@ def _steps(minutes: int, zone: int, hr_target: bool) -> list[dict[str, Any]]:
 
 
 def _payload(discipline: Discipline, minutes: int, w: Workout, name: str) -> dict[str, Any]:
-    sport_id, sport_key = _SPORTS[discipline]
-    sport = {"sportTypeId": sport_id, "sportTypeKey": sport_key, "displayOrder": sport_id}
+    sport_id, sport_key, order = _SPORTS[discipline]
+    sport = {"sportTypeId": sport_id, "sportTypeKey": sport_key, "displayOrder": order}
     # Heart rate zones are meaningless on most wrist-based swim tracking, so swims get no target.
     steps = _steps(minutes, w.intensity, hr_target=discipline != Discipline.SWIM)
-    return {
+    payload = {
         "workoutName": name,
         "description": f"Zone {w.intensity}" + (" · key session" if w.key else ""),
         "sportType": sport,
         "estimatedDurationInSecs": minutes * 60,
         "workoutSegments": [{"segmentOrder": 1, "sportType": sport, "workoutSteps": steps}],
     }
+    if discipline == Discipline.SWIM:
+        payload |= _POOL
+    return payload
 
 
 def to_garmin_workouts(sw: ScheduledWorkout) -> list[dict[str, Any]]:
@@ -99,12 +126,14 @@ def to_garmin_workouts(sw: ScheduledWorkout) -> list[dict[str, Any]]:
     w = sw.workout
     label = w.description or w.discipline.value
     if w.discipline in _SPORTS and w.duration_min > 0:
-        return [_payload(w.discipline, w.duration_min, w, NAME_PREFIX + label)]
+        return [_payload(w.discipline, w.duration_min, w, workout_name(w.discipline, w.duration_min, label))]
     if w.discipline == Discipline.BRICK and w.duration_min > 0:
         bike = round(w.duration_min * BRICK_BIKE_SHARE)
+        run = w.duration_min - bike
+        label = label if "brick" in label.lower() else f"{label} (brick)"
         return [
-            _payload(Discipline.BIKE, bike, w, f"{NAME_PREFIX}{label} (bike)"),
-            _payload(Discipline.RUN, w.duration_min - bike, w, f"{NAME_PREFIX}{label} (run)"),
+            _payload(Discipline.BIKE, bike, w, workout_name(Discipline.BIKE, bike, label)),
+            _payload(Discipline.RUN, run, w, workout_name(Discipline.RUN, run, label)),
         ]
     return []  # rest and strength stay in flexTri only
 
@@ -132,7 +161,7 @@ def export_schedule(schedule: Schedule, out_dir: Path, start: date, days: int) -
     out_dir.mkdir(parents=True, exist_ok=True)
     paths = []
     for day, payload in _window(schedule, start, days):
-        slug = re.sub(r"[^a-z0-9]+", "-", payload["workoutName"].removeprefix(NAME_PREFIX).lower()).strip("-")
+        slug = re.sub(r"[^a-z0-9]+", "-", short_title(payload["workoutName"]).lower()).strip("-")
         path = out_dir / f"{day.isoformat()}_{slug}.json"
         path.write_text(json.dumps(payload, indent=2))
         paths.append(path)
