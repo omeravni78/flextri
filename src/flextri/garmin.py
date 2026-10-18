@@ -32,12 +32,13 @@ from typing import Any, Protocol
 
 from .models import Discipline, Schedule, ScheduledWorkout, Workout, WorkoutStatus
 
-# Names start with the sport so the watch's workout list, which cuts long names
-# short, shows "RUN", "BIKE" or "SWIM" first; the marker at the end tells
-# flexTri which Garmin workouts it owns. Workouts sent before the sport-first
-# names used NAME_PREFIX instead, so both are recognised.
-NAME_SUFFIX = " · flexTri"
+# Garmin keeps only the first 32 characters of a workout name, so names start with
+# the sport ("RUN 8x30s hill strides") and carry no flexTri marker. flexTri knows its
+# own workouts by the ids it saved when sending them (SENT_FILE). Workouts sent
+# before that were named "flexTri: ..." and are still recognised by NAME_PREFIX.
+NAME_LIMIT = 32
 NAME_PREFIX = "flexTri: "
+SENT_FILE = "garmin_sent.json"
 
 # Garmin's workout sport ids (garminconnect.workout.SportType): id 3 is "other",
 # which showed swims with a generic icon. displayOrder follows Garmin's own payloads.
@@ -61,18 +62,47 @@ class GarminClient(Protocol):
     def get_scheduled_workouts(self, year: int, month: int) -> dict[str, Any]: ...
 
 
-def workout_name(discipline: Discipline, minutes: int, label: str) -> str:
-    """Sport and length first, e.g. "RUN 40' tempo run · flexTri"."""
-    return f"{_SPORT_WORDS[discipline]} {minutes}' {label}{NAME_SUFFIX}"
+def workout_name(discipline: Discipline, label: str) -> str:
+    """Sport first, cut to what Garmin keeps, e.g. "RUN easy with 8x30s hill strides"."""
+    name = f"{_SPORT_WORDS[discipline]} {label}"
+    if len(name) > NAME_LIMIT:
+        name = name[:NAME_LIMIT + 1].rsplit(" ", 1)[0]  # don't end on half a word
+    return name.rstrip(" ,:;(+-")
 
 
-def is_flextri(title: str) -> bool:
-    return title.endswith(NAME_SUFFIX) or title.startswith(NAME_PREFIX)
+def is_flextri(title: str, workout_id: int | None = None, sent: set[int] | frozenset[int] = frozenset()) -> bool:
+    return workout_id in sent or title.startswith(NAME_PREFIX)
 
 
 def short_title(title: str) -> str:
-    """A Garmin workout title without flexTri's marker."""
-    return title.removesuffix(NAME_SUFFIX).removeprefix(NAME_PREFIX)
+    """A Garmin workout title without the old "flexTri: " marker."""
+    return title.removeprefix(NAME_PREFIX)
+
+
+def _sent_path() -> Path:
+    from .paths import data_dir
+
+    return data_dir() / SENT_FILE
+
+
+def sent_ids() -> set[int]:
+    """Ids of the Garmin workouts flexTri created."""
+    try:
+        return {int(i) for i in json.loads(_sent_path().read_text())}
+    except (OSError, ValueError, TypeError):
+        return set()
+
+
+def save_sent_ids(ids: set[int]) -> None:
+    _sent_path().write_text(json.dumps(sorted(ids)))
+
+
+def _brick_part(label: str, sport: str) -> str:
+    """"bike 40 min (12x15s ...)" from "bike 40 min (12x15s ...) + run 20 min easy"."""
+    for part in label.split(" + "):
+        if part.lower().startswith(sport + " "):
+            return "brick " + part[len(sport) + 1:]
+    return label if "brick" in label.lower() else f"brick {label}"
 
 
 def _step(order: int, kind: str, minutes: int, zone: int | None) -> dict[str, Any]:
@@ -111,7 +141,9 @@ def _payload(discipline: Discipline, minutes: int, w: Workout, name: str) -> dic
     steps = _steps(minutes, w.intensity, hr_target=discipline != Discipline.SWIM)
     payload = {
         "workoutName": name,
-        "description": f"Zone {w.intensity}" + (" · key session" if w.key else ""),
+        # The full plan text, since the name is cut at 32 characters.
+        "description": (f"{w.description} · " if w.description else "") + f"Zone {w.intensity}"
+                       + (" · key session" if w.key else ""),
         "sportType": sport,
         "estimatedDurationInSecs": minutes * 60,
         "workoutSegments": [{"segmentOrder": 1, "sportType": sport, "workoutSteps": steps}],
@@ -126,14 +158,13 @@ def to_garmin_workouts(sw: ScheduledWorkout) -> list[dict[str, Any]]:
     w = sw.workout
     label = w.description or w.discipline.value
     if w.discipline in _SPORTS and w.duration_min > 0:
-        return [_payload(w.discipline, w.duration_min, w, workout_name(w.discipline, w.duration_min, label))]
+        return [_payload(w.discipline, w.duration_min, w, workout_name(w.discipline, label))]
     if w.discipline == Discipline.BRICK and w.duration_min > 0:
         bike = round(w.duration_min * BRICK_BIKE_SHARE)
         run = w.duration_min - bike
-        label = label if "brick" in label.lower() else f"{label} (brick)"
         return [
-            _payload(Discipline.BIKE, bike, w, workout_name(Discipline.BIKE, bike, label)),
-            _payload(Discipline.RUN, run, w, workout_name(Discipline.RUN, run, label)),
+            _payload(Discipline.BIKE, bike, w, workout_name(Discipline.BIKE, _brick_part(label, "bike"))),
+            _payload(Discipline.RUN, run, w, workout_name(Discipline.RUN, _brick_part(label, "run"))),
         ]
     return []  # rest and strength stay in flexTri only
 
@@ -171,6 +202,7 @@ def export_schedule(schedule: Schedule, out_dir: Path, start: date, days: int) -
 def push_schedule(schedule: Schedule, client: GarminClient, start: date, days: int) -> list[str]:
     """Upload and schedule planned workouts from ``start`` for ``days`` days; skips ones already there."""
     seen = _already_scheduled(client, start, start + timedelta(days=days - 1))
+    sent = sent_ids()
     lines = []
     for day, payload in _window(schedule, start, days):
         key = (day.isoformat(), payload["workoutName"])
@@ -178,6 +210,8 @@ def push_schedule(schedule: Schedule, client: GarminClient, start: date, days: i
             lines.append(f"{key[0]} {key[1]}: already on Garmin")
             continue
         created = client.upload_workout(payload)
+        sent.add(int(created["workoutId"]))
+        save_sent_ids(sent)  # after each upload, so a failure halfway still remembers the earlier ones
         client.schedule_workout(created["workoutId"], key[0])
         lines.append(f"{key[0]} {key[1]}: added")
     return lines
