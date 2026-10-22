@@ -207,7 +207,7 @@ form { margin: 0; }
 
   <div class="card" style="padding-top: 4px; padding-bottom: 4px">
     <form class="action" method="post" action="/garmin/send">
-      <div><div class="strong">Send this week to watch</div><div class="small">The next {{ send_days }} days. Ones already there are skipped.</div></div>
+      <div><div class="strong">Send 7 days ahead to watch</div><div class="small">Today and the next {{ send_days - 1 }} days. Ones already there are skipped.</div></div>
       <button class="primary" type="submit">Send</button>
     </form>
     <form class="action" method="post" action="/garmin/cleanup">
