@@ -26,7 +26,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-flextri = ["web/templates/*.html", "web/static/*", "data/plans/*.json", "data/examples/*.json", "data/icon.png"]
+flextri = ["web/templates/*.html", "web/static/*", "data/plans/*.json", "data/plans/*.csv", "data/examples/*.json", "data/icon.png"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

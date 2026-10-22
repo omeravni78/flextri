@@ -37,5 +37,5 @@ def test_old_database_and_tokens_are_copied_once(tmp_path, monkeypatch):
 
 
 def test_plans_ship_inside_the_package():
-    assert (paths.bundled("plans") / "olympic_8week_triathlete.json").is_file()
+    assert (paths.bundled("plans") / "O_8_TRI.csv").is_file()
     assert (paths.bundled("examples") / "placeholder_plan.json").is_file()

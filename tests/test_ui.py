@@ -57,6 +57,11 @@ def test_wizard_to_calendar_and_day_actions(client):
     html = client.post("/ui/day/2026-10-07/action", data={"kind": "swap", "workout_id": wid, "discipline": "run"}).text
     assert "banner error" in html and "Key sessions" in html
     assert "Undid easier" in client.post("/ui/undo").text
+    panel = client.get("/ui/day/2026-10-07").text
+    assert 'value="remove"' in panel and "key session, so it won't move" in panel
+    html = client.post("/ui/day/2026-10-07/action", data={"kind": "remove", "workout_id": wid, "around": "2026-10-07"}).text
+    assert "Wed 7 Oct bike removed" in html and "removed by you" in html and "Undo" in html
+    assert "Undid remove" in client.post("/ui/undo").text
 
     html = client.post("/ui/day/2026-10-07/checkin", data={"workout_id": wid, "outcome": "done", "minutes": "60", "rpe": "9", "fatigue": "4"}).text
     assert "Checked in." in html and "Eased" in html
@@ -76,9 +81,9 @@ def test_edit_setup_prefills_and_previews_changes(client):
 
 def test_wizard_offers_plans_and_builds_the_chosen_one(client):
     html = client.get("/setup").text
-    assert 'name="plan" value="olympic_8week_triathlete"' in html
+    assert 'name="plan" value="O_8_TRI"' in html
     assert 'name="plan" value="placeholder_plan"' in html
-    form = {**FORM, "plan": "olympic_8week_triathlete"}
+    form = {**FORM, "plan": "O_8_TRI"}
     assert "Triathlete.com 8-week Olympic plan" in client.post("/ui/preview", data=form).text
     assert client.post("/setup", data=form).headers["HX-Redirect"] == "/?saved=1"
     cal = client.get("/calendar").text
@@ -93,7 +98,7 @@ def test_unknown_plan_is_rejected(client):
 def test_wizard_day_choices_reach_the_plan(client):
     html = client.get("/setup").text
     assert 'name="long_ride_day"' in html and 'name="brick_day"' in html and "Swim days" in html
-    form = {**FORM, "plan": "olympic_8week_triathlete", "long_ride_day": "6", "long_run_day": "5",
+    form = {**FORM, "plan": "O_8_TRI", "long_ride_day": "6", "long_run_day": "5",
             "brick_day": "3", "pool_days": ["2", "5"]}
     assert "long ride Sun, long run Sat, brick Thu" in client.post("/ui/preview", data=form).text
     client.post("/setup", data=form)
@@ -102,7 +107,7 @@ def test_wizard_day_choices_reach_the_plan(client):
 
 
 def test_preview_warns_when_too_few_days(client):
-    form = {**FORM, "plan": "olympic_8week_triathlete", "available_days": ["0", "2", "5"]}
+    form = {**FORM, "plan": "O_8_TRI", "available_days": ["0", "2", "5"]}
     assert "leaves out the easier ones" in client.post("/ui/preview", data=form).text
 
 
@@ -133,7 +138,7 @@ def test_calendar_sends_this_week_to_garmin(client):
         def protection(self):
             return "Saved encrypted."
 
-    client.post("/setup", data={**FORM, "plan": "olympic_8week_triathlete"})
+    client.post("/setup", data={**FORM, "plan": "O_8_TRI"})
     cal = client.get("/calendar").text
     assert 'href="/garmin"' in cal and 'action="/garmin/send"' in cal
     api.app.dependency_overrides[garmin_ui.get_account] = lambda: Connected()

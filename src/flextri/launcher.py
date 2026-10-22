@@ -159,7 +159,7 @@ def self_test() -> int:
             page = r.read().decode()
         with urllib.request.urlopen(desk.url + "/static/htmx.min.js", timeout=10) as r:
             r.read()
-        problems = [] if "olympic_8week_triathlete" in page else ["the Olympic plan is missing from the wizard"]
+        problems = [] if "O_8_TRI" in page else ["the Olympic plan is missing from the wizard"]
         try:
             import garminconnect  # noqa: F401
         except ImportError as e:
