@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse
 
 from .. import today_view
-from ..garmin import push_schedule
+from ..garmin import push_schedule, short_title
 from ..garmin_calendar import by_day, read_week, remove
 from ..garmin_account import GarminAccount, GarminLoginError, library_problem
 from ..garmin_cleanup import delete_old, scan
@@ -101,7 +101,8 @@ def send(request: Request, account: GarminAccount = Depends(get_account),
 
 def _pretty(line: str) -> str:
     day, _, rest = line.partition(" ")
-    return f"{date.fromisoformat(day):%a %d %b} · {rest.removeprefix('flexTri: ')}"
+    name, _, outcome = rest.rpartition(": ")
+    return f"{date.fromisoformat(day):%a %d %b} · {short_title(name)}: {outcome}"
 
 
 @router.post("/cleanup", response_class=HTMLResponse)

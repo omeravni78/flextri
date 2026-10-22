@@ -164,3 +164,14 @@ def test_week_shows_garmin_errors(web, cal, monkeypatch):
     week = web.get("/garmin/week").text
     assert "read your Garmin calendar: Garmin is down" in week
     assert "Try again" in week
+
+
+def test_workouts_flextri_sent_are_known_by_id_not_name():
+    from flextri.garmin import save_sent_ids
+
+    save_sent_ids({12})
+    cal = FakeCalendar([item(2, 12, "2026-10-29", "RUN easy run"), item(3, 13, "2026-10-30", "RUN easy run")])
+    mine, theirs = read_week(cal, TODAY)
+    assert (mine.from_flextri, theirs.from_flextri) == (True, False)
+    remove(cal, TODAY, 7, [2, 3])
+    assert (cal.deleted, cal.unscheduled) == ([12], [3])

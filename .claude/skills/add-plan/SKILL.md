@@ -23,7 +23,7 @@ different plan from the same source, add a number (`O_8_TRI2`). Never reuse or c
 - Add a row to `plans.csv`: `code, name, race, weeks, source, notes`. Notes say what was converted
   (e.g. yards to meters) and anything the athlete should know.
 - Write `<code>.csv` with the header
-  `code,week,phase,day,slot,discipline,duration_min,intensity,key,description`, leaving `code` empty.
+  `code,week,phase,day,slot,discipline,duration_min,intensity,key,description,steps`, leaving `code` empty.
   - `discipline`: `swim`, `bike`, `run`, `brick`, `strength`, `rest`.
   - Plans must not hard-code weekdays: leave `day` empty and give every row a `slot`: `swim`, `long_ride`,
     `long_run`, `brick`, `bike`, `run`, `strength`, `pre_race`, `race`. The week's longest ride and run are the
@@ -34,6 +34,12 @@ different plan from the same source, add a number (`O_8_TRI2`). Never reuse or c
   - `key`: `yes` for the week's long ride, long run, brick and hard interval sessions; otherwise empty.
   - `description`: the session as written, short. Swims in meters (yards x 0.9144, rounded to 50 m).
   - Every week needs at least one row; the final week ends with a `race` row (`key` yes, `duration_min` 0).
+  - `steps`: for every swim, bike, run and brick, the session as the watch should run it, in the format in
+    `src/flextri/steps.py`, e.g. `* z2 [easy]; 8x(30s [hill stride], 90s z1 [jog back down]); cd 5min z1`.
+    Swims in meters, no zones. Give one easy or steady step `*` so the session still adds up when flexTri
+    stretches it (leave `*` out when the session has distance steps). Bricks: `bike: ... | run: ...`, each leg
+    adding up to its minutes in the description. Where the source leaves something out (recoveries, warm-up),
+    pick a sensible default and list those defaults in the PR. Leave it empty for strength, rest and race rows.
 
 ## 4. Fill in codes and check
 ```
