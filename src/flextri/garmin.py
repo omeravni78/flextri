@@ -12,8 +12,9 @@ It reads the same SQLite database as the web app (``FLEXTRI_DB``, default
 ``flextri.db`` in flexTri's data folder, see ``paths.py``); ``--data`` reads a
 CLI JSON schedule instead.
 
-After the first login the tokens are cached in the data folder (``GARMINTOKENS``
-overrides it) and the password is no longer needed.
+After the first login the tokens are kept encrypted in the data folder
+(``GARMINTOKENS`` overrides it, see ``token_vault.py``) and the password is no
+longer needed.
 
 Without logging in, ``--export DIR`` writes one Garmin workout JSON file per
 session instead. Import those in Garmin Connect web with the "Share your Garmin
@@ -160,11 +161,18 @@ def _login() -> GarminClient:
     except ImportError:
         raise SystemExit("Install the Garmin client first: pip install garminconnect") from None
     from .paths import garmin_tokens
+    from .token_vault import TokenVault, TokenVaultError
 
-    tokens = str(garmin_tokens())
+    vault = TokenVault(garmin_tokens())
+    try:
+        saved = vault.read()
+    except TokenVaultError as e:
+        print(f"Ignoring the saved Garmin login ({e}); logging in with GARMIN_EMAIL and GARMIN_PASSWORD.")
+        saved = None
     client = Garmin(os.environ.get("GARMIN_EMAIL"), os.environ.get("GARMIN_PASSWORD"),
                     prompt_mfa=lambda: input("Garmin MFA code: "))
-    client.login(tokens)
+    client.login(saved)  # tokens go in as text, so the library doesn't write its own unencrypted copy
+    vault.write(client.client.dumps())
     return client
 
 
