@@ -30,6 +30,8 @@ def _encode(obj: Any) -> Any:
 
 
 def _workout(d: dict) -> Workout:
+    # A session's watch steps stay in the plan CSV; garmin.py looks them up by code (see bank.steps_for).
+    d = {k: v for k, v in d.items() if k != "steps"}
     return Workout(**{**d, "discipline": Discipline(d["discipline"])})
 
 

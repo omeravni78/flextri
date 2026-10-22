@@ -30,6 +30,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Protocol
 
+from . import steps
 from .models import Discipline, Schedule, ScheduledWorkout, Workout, WorkoutStatus
 
 # Garmin keeps only the first 32 characters of a workout name, so names start with
@@ -50,7 +51,7 @@ _SPORTS = {
 _SPORT_WORDS = {Discipline.RUN: "RUN", Discipline.BIKE: "BIKE", Discipline.SWIM: "SWIM"}
 # Garmin asks swim workouts for a pool length; flexTri plans count swims in meters.
 _POOL = {"poolLength": 25.0, "poolLengthUnit": {"unitId": 1, "unitKey": "meter", "factor": 100.0}}
-_STEP_TYPES = {"warmup": 1, "cooldown": 2, "interval": 3}
+_STEP_TYPES = {"warmup": 1, "cooldown": 2, "interval": 3, "recovery": 4, "rest": 5}
 BRICK_BIKE_SHARE = 2 / 3
 
 
@@ -105,66 +106,157 @@ def _brick_part(label: str, sport: str) -> str:
     return label if "brick" in label.lower() else f"brick {label}"
 
 
-def _step(order: int, kind: str, minutes: int, zone: int | None) -> dict[str, Any]:
-    target: dict[str, Any] = {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target", "displayOrder": 1}
+_NO_TARGET = {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target", "displayOrder": 1}
+_HR_ZONE = {"workoutTargetTypeId": 4, "workoutTargetTypeKey": "heart.rate.zone", "displayOrder": 4}
+_END = {  # Garmin's end conditions (garminconnect.workout.ConditionType)
+    "lap": {"conditionTypeId": 1, "conditionTypeKey": "lap.button", "displayOrder": 1, "displayable": True},
+    "time": {"conditionTypeId": 2, "conditionTypeKey": "time", "displayOrder": 2, "displayable": True},
+    "distance": {"conditionTypeId": 3, "conditionTypeKey": "distance", "displayOrder": 3, "displayable": True},
+    "fixed.rest": {"conditionTypeId": 8, "conditionTypeKey": "fixed.rest", "displayOrder": 8, "displayable": True},
+}
+
+
+def _step(order: int, kind: str, end: str, value: float | None, zone: int | None, note: str = "") -> dict[str, Any]:
     step: dict[str, Any] = {
         "type": "ExecutableStepDTO",
         "stepOrder": order,
         "stepType": {"stepTypeId": _STEP_TYPES[kind], "stepTypeKey": kind, "displayOrder": _STEP_TYPES[kind]},
-        "endCondition": {"conditionTypeId": 2, "conditionTypeKey": "time", "displayOrder": 2, "displayable": True},
-        "endConditionValue": float(minutes * 60),
-        "targetType": target,
+        "endCondition": _END[end],
+        "endConditionValue": value,
+        "targetType": _HR_ZONE if zone is not None else _NO_TARGET,
     }
+    if end == "distance":
+        step["preferredEndConditionUnit"] = {"unitKey": "meter"}
     if zone is not None:
-        step["targetType"] = {"workoutTargetTypeId": 4, "workoutTargetTypeKey": "heart.rate.zone", "displayOrder": 4}
         step["zoneNumber"] = zone
+    if note:
+        step["description"] = note
     return step
 
 
-def _steps(minutes: int, zone: int, hr_target: bool) -> list[dict[str, Any]]:
-    """Warm-up and cool-down around a main set in the session's zone; short sessions are one step."""
+def _plain_steps(minutes: int, zone: int, hr_target: bool) -> list[dict[str, Any]]:
+    """Warm-up and cool-down around a main set in the session's zone; short sessions are one step.
+
+    Used when the plan gives the session no steps of its own.
+    """
     main_zone = zone if hr_target else None
     if minutes < 20:
-        return [_step(1, "interval", minutes, main_zone)]
+        return [_step(1, "interval", "time", minutes * 60.0, main_zone)]
     edge = max(5, round(minutes * 0.15))
     return [
-        _step(1, "warmup", edge, 1 if hr_target else None),
-        _step(2, "interval", minutes - 2 * edge, main_zone),
-        _step(3, "cooldown", edge, 1 if hr_target else None),
+        _step(1, "warmup", "time", edge * 60.0, 1 if hr_target else None),
+        _step(2, "interval", "time", (minutes - 2 * edge) * 60.0, main_zone),
+        _step(3, "cooldown", "time", edge * 60.0, 1 if hr_target else None),
     ]
 
 
-def _payload(discipline: Discipline, minutes: int, w: Workout, name: str) -> dict[str, Any]:
+def _plan_steps(plan: steps.Steps, fill_seconds: int, swim: bool) -> list[dict[str, Any]]:
+    """The plan's steps as Garmin steps; ``fill_seconds`` is the time the '*' step gets."""
+    order, group = 0, 0
+
+    def build(items: steps.Steps, child: int | None) -> list[dict[str, Any]]:
+        nonlocal order, group
+        out = []
+        for s in items:
+            order += 1
+            if isinstance(s, steps.Repeat):
+                group += 1
+                me, my_order = group, order
+                out.append({
+                    "type": "RepeatGroupDTO", "stepOrder": my_order,
+                    "stepType": {"stepTypeId": 6, "stepTypeKey": "repeat", "displayOrder": 6},
+                    "childStepId": me, "numberOfIterations": s.times, "smartRepeat": False,
+                    "endCondition": {"conditionTypeId": 7, "conditionTypeKey": "iterations", "displayOrder": 7,
+                                     "displayable": False},
+                    "endConditionValue": float(s.times), "workoutSteps": build(s.steps, me),
+                })
+                continue
+            if s.lap:
+                end, value = "lap", None
+            elif s.meters:
+                end, value = "distance", float(s.meters)
+            elif s.kind == "rest" and swim:
+                end, value = "fixed.rest", float(s.seconds or 0)
+            else:
+                end, value = "time", float(fill_seconds if s.fill else s.seconds or 0)
+            # Heart rate zones mean little on most wrist-based swim tracking, so swims get no target.
+            step = _step(order, s.kind, end, value, None if swim else s.zone, s.note)
+            if child is not None:
+                step["childStepId"] = child
+            out.append(step)
+        return out
+
+    return build(plan, None)
+
+
+def _fit(plan: steps.Steps, seconds: int) -> tuple[int, int] | None:
+    """(time for the '*' step, session seconds), or None if the fixed steps don't fit in ``seconds``."""
+    fixed = steps.fixed_seconds(plan)
+    if not steps.has_fill(plan):
+        # As written. Distance and lap steps have no set time, so then the session keeps its minutes.
+        open_ended = any(s.meters or s.lap for s in steps.walk(plan))
+        return 0, seconds if open_ended or not fixed else fixed
+    fill = seconds - fixed
+    return (fill, seconds) if fill >= 60 else None
+
+
+def _payload(discipline: Discipline, minutes: int, w: Workout, name: str,
+             plan: steps.Steps | None = None) -> dict[str, Any]:
     sport_id, sport_key, order = _SPORTS[discipline]
     sport = {"sportTypeId": sport_id, "sportTypeKey": sport_key, "displayOrder": order}
-    # Heart rate zones are meaningless on most wrist-based swim tracking, so swims get no target.
-    steps = _steps(minutes, w.intensity, hr_target=discipline != Discipline.SWIM)
+    swim = discipline == Discipline.SWIM
+    fit = _fit(plan, minutes * 60) if plan else None
+    if fit:
+        workout_steps, seconds = _plan_steps(plan, fit[0], swim), fit[1]
+    else:
+        workout_steps, seconds = _plain_steps(minutes, w.intensity, hr_target=not swim), minutes * 60
     payload = {
         "workoutName": name,
         # The full plan text, since the name is cut at 32 characters.
         "description": (f"{w.description} · " if w.description else "") + f"Zone {w.intensity}"
                        + (" · key session" if w.key else ""),
         "sportType": sport,
-        "estimatedDurationInSecs": minutes * 60,
-        "workoutSegments": [{"segmentOrder": 1, "sportType": sport, "workoutSteps": steps}],
+        "estimatedDurationInSecs": seconds,
+        "workoutSegments": [{"segmentOrder": 1, "sportType": sport, "workoutSteps": workout_steps}],
     }
-    if discipline == Discipline.SWIM:
+    if swim:
         payload |= _POOL
     return payload
 
 
+def _parse_or_none(text: str | None, parse) -> Any:
+    try:
+        return parse(text) if text else None
+    except ValueError:
+        return None  # a bad steps cell shouldn't stop the upload; `bank check` reports it
+
+
 def to_garmin_workouts(sw: ScheduledWorkout) -> list[dict[str, Any]]:
-    """Garmin workout payloads for one scheduled session (bricks become a ride plus a run)."""
+    """Garmin workout payloads for one scheduled session (bricks become a ride plus a run).
+
+    When the plan spells out the session's steps (the ``steps`` column, see steps.py), the
+    watch gets those; otherwise warm-up, one main block and cool-down.
+    """
+    from .bank import steps_for
+
     w = sw.workout
     label = w.description or w.discipline.value
+    text = steps_for(w.code, w.description, w.intensity)
     if w.discipline in _SPORTS and w.duration_min > 0:
-        return [_payload(w.discipline, w.duration_min, w, workout_name(w.discipline, label))]
+        plan = _parse_or_none(text, steps.parse)
+        return [_payload(w.discipline, w.duration_min, w, workout_name(w.discipline, label), plan)]
     if w.discipline == Discipline.BRICK and w.duration_min > 0:
+        legs = _parse_or_none(text, steps.legs) or {}
         bike = round(w.duration_min * BRICK_BIKE_SHARE)
-        run = w.duration_min - bike
+        minutes = {"bike": bike, "run": w.duration_min - bike}
+        for sport, leg in legs.items():
+            if sport in minutes and not steps.has_fill(leg) and steps.fixed_seconds(leg):
+                minutes[sport] = round(steps.fixed_seconds(leg) / 60)
         return [
-            _payload(Discipline.BIKE, bike, w, workout_name(Discipline.BIKE, _brick_part(label, "bike"))),
-            _payload(Discipline.RUN, run, w, workout_name(Discipline.RUN, _brick_part(label, "run"))),
+            _payload(Discipline.BIKE, minutes["bike"], w, workout_name(Discipline.BIKE, _brick_part(label, "bike")),
+                     legs.get("bike")),
+            _payload(Discipline.RUN, minutes["run"], w, workout_name(Discipline.RUN, _brick_part(label, "run")),
+                     legs.get("run")),
         ]
     return []  # rest and strength stay in flexTri only
 
