@@ -80,6 +80,11 @@ form { margin: 0; }
 .wk .tag { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border: 1.5px solid currentColor; border-radius: 99px; padding: 1px 7px; white-space: nowrap; }
 .wk .bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .wk .bar .note { flex: 1 1 100%; font-size: 13px; color: var(--quiet); }
+.wk .wknav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wk .wknav > .strong { display: grid; text-align: center; flex: 1 1 auto; line-height: 1.2; }
+.wk .wknav small { font-size: 12px; font-weight: 400; color: var(--quiet); }
+.wk .wknav button[aria-label] { min-width: 40px; font-size: 20px; line-height: 1; padding: 6px 10px; }
+.wk .wknav .link { flex-basis: 100%; background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: 13px; }
 .wk .gone { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 
 /* One Big Day: tall condensed numbers, sessions as sport-colored tiles */
@@ -202,7 +207,7 @@ form { margin: 0; }
 
   <div class="card" style="padding-top: 4px; padding-bottom: 4px">
     <form class="action" method="post" action="/garmin/send">
-      <div><div class="strong">Send this week to watch</div><div class="small">The next {{ send_days }} days. Ones already there are skipped.</div></div>
+      <div><div class="strong">Send 7 days ahead to watch</div><div class="small">Today and the next {{ send_days - 1 }} days. Ones already there are skipped.</div></div>
       <button class="primary" type="submit">Send</button>
     </form>
     <form class="action" method="post" action="/garmin/cleanup">

@@ -18,7 +18,7 @@ flexTri uses your password once to log in and never saves it. It keeps only Garm
 
 ## Send your week
 
-Press **Send this week to Garmin** on Today, in the calendar, or on the Garmin page. flexTri sends the planned sessions for the next 7 days and lists what it added. Sessions that are already on Garmin are skipped, so pressing it twice is safe.
+Press **Send this week to Garmin** on Today or in the calendar, or **Send 7 days ahead to watch** on the Garmin page. flexTri sends the planned sessions for the next 7 days and lists what it added. Sessions that are already on Garmin are skipped, so pressing it twice is safe.
 
 In the calendar, each later week has its own **Send to Garmin** button too.
 
@@ -30,7 +30,7 @@ Changed your plan after sending? Check in or edit as usual, then send again: new
 
 ## See what Garmin has for your week
 
-The Garmin page shows **"Here's what Garmin thinks your week will look like"**: everything on your Garmin calendar for the next 7 days, read back from Garmin Connect. Sessions you made in Garmin yourself are marked **Not flexTri**.
+The Garmin page shows **"Here's what Garmin thinks your week will look like"**: everything on your Garmin calendar for one week, read back from Garmin Connect. The weeks match your calendar: they start on the day you picked in setup and carry the same "Week N of M" label. Use ‹ and › to look at other weeks. Sessions you made in Garmin yourself are marked **Not flexTri**.
 
 <figure class="phone"><img src="img/garmin-week.png" alt="The next 7 days as Garmin sees them, each session with a checkbox, one marked Not flexTri, and Delete selected and Delete all buttons."></figure>
 

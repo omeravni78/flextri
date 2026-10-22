@@ -151,7 +151,7 @@ def test_page_walks_from_login_to_send_cleanup_and_disconnect(web, account, made
     assert "accept that" in page and 'value="me@x.com"' in page
 
     page = web.post("/garmin/connect", data={"email": "me@x.com", "password": "right"}).text
-    assert "Garmin connected" in page and "Send this week to watch" in page
+    assert "Garmin connected" in page and "Send 7 days ahead to watch" in page
 
     assert "Finish the setup first" in web.post("/garmin/send").text
     assert web.put("/api/profile", json=PROFILE).status_code == 200
