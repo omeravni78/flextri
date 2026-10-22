@@ -85,3 +85,18 @@ def test_actions_survive_roundtrip(schedule):
     assert restored == schedule
     actions.undo(restored)
     assert restored.get(_on(schedule, 2, Discipline.BIKE).id).workout.duration_min == 60
+
+
+def test_remove_drops_one_session_and_undo_brings_it_back(schedule):
+    tempo = _on(schedule, 2, Discipline.BIKE)
+    others = [w for w in schedule.on(tempo.date) if w.id != tempo.id]
+    changes = actions.remove(schedule, tempo.id, MON)
+    assert tempo.status == WorkoutStatus.DROPPED and tempo.date == MON + timedelta(days=2)
+    assert changes == [f"{tempo.label} removed"]
+    assert all(w.status == WorkoutStatus.PLANNED for w in others)
+    with pytest.raises(actions.ActionError, match="already dropped"):
+        actions.remove(schedule, tempo.id, MON)
+    assert actions.undo(schedule) == [f"Undid remove on {tempo.label.rsplit(' ', 1)[0]}"]
+    assert schedule.get(tempo.id).status == WorkoutStatus.PLANNED
+    with pytest.raises(actions.ActionError, match="Past"):
+        actions.remove(schedule, tempo.id, MON + timedelta(days=3))

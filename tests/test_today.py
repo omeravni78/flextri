@@ -5,7 +5,7 @@ from flextri.web import api
 
 from test_ui import FORM, TODAY, client  # noqa: F401  (client is a fixture)
 
-OLYMPIC = {**FORM, "plan": "olympic_8week_triathlete"}
+OLYMPIC = {**FORM, "plan": "O_8_TRI"}
 
 
 def _store():

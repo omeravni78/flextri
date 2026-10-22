@@ -2,9 +2,9 @@
 
 The athlete types their Garmin email and password once (plus the two-step code if
 Garmin asks for one). flexTri never writes the password anywhere: it logs in,
-keeps only Garmin's login tokens in the same folder the command line uses
-(``GARMINTOKENS``, default ``garmin`` in flexTri's data folder, see ``paths.py``),
-and forgets the password. After that, ``python -m flextri.garmin`` and the web
+keeps only Garmin's login tokens, encrypted (see ``token_vault.py``), in the same
+folder the command line uses (``GARMINTOKENS``, default ``garmin`` in flexTri's data
+folder, see ``paths.py``), and forgets the password. After that, ``python -m flextri.garmin`` and the web
 page share the same connection.
 Disconnecting deletes the tokens.
 """
@@ -18,10 +18,11 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import paths
+from .token_vault import PLAIN_FILE, TokenVault, TokenVaultError
 
 log = logging.getLogger(__name__)
 
-TOKEN_FILE = "garmin_tokens.json"
+TOKEN_FILE = PLAIN_FILE  # what flexTri 0.2 and older saved unencrypted; encrypted on first read
 # Files older garminconnect releases (built on garth) wrote; removed on disconnect too.
 LEGACY_TOKEN_FILES = ("oauth1_token.json", "oauth2_token.json")
 CODE_TIMEOUT_S = 10 * 60
@@ -89,10 +90,11 @@ class GarminAccount:
     """The one Garmin connection of this install (one athlete per install)."""
 
     def __init__(self, tokens: Path | None = None, factory: Callable[..., Any] = _garmin_factory,
-                 clock: Callable[[], float] = time.monotonic):
+                 clock: Callable[[], float] = time.monotonic, keyring: Any | None = None):
         self._tokens = tokens
         self._factory = factory
         self._clock = clock
+        self._keyring = keyring
         self._pending: tuple[Any, float] | None = None  # login waiting for the two-step code
 
     @property
@@ -100,8 +102,15 @@ class GarminAccount:
         return self._tokens if self._tokens is not None else token_dir()
 
     @property
+    def vault(self) -> TokenVault:
+        return TokenVault(self.tokens, keyring=self._keyring)
+
+    @property
     def connected(self) -> bool:
-        return (self.tokens / TOKEN_FILE).exists()
+        return self.vault.exists()
+
+    def protection(self) -> str:
+        return self.vault.protection()
 
     @property
     def waiting_for_code(self) -> bool:
@@ -150,9 +159,15 @@ class GarminAccount:
         """A logged-in Garmin client from the saved tokens."""
         if not self.connected:
             raise GarminLoginError("Connect Garmin first.")
+        vault = self.vault
+        try:
+            saved = vault.read()
+        except TokenVaultError as e:
+            log.warning("Saved Garmin login unreadable: %s", e)
+            raise GarminLoginError(f"{str(e).capitalize()}. Disconnect and connect again.") from None
         garmin = self._factory()
         try:
-            garmin.login(str(self.tokens))
+            garmin.login(saved)  # the decrypted tokens go in as text, so the library never writes them to disk
         except GarminLoginError:
             raise
         except Exception as e:
@@ -160,15 +175,16 @@ class GarminAccount:
             raise GarminLoginError(
                 f"Garmin didn't accept flexTri's saved login. Disconnect and connect again. (Garmin said: {_detail(e)})"
             ) from None
+        refreshed = garmin.client.dumps()
+        if refreshed != saved:  # Garmin renewed the tokens while logging in
+            vault.write(refreshed)
         return garmin
 
     def disconnect(self) -> None:
         self._pending = None
-        for name in (TOKEN_FILE, *LEGACY_TOKEN_FILES):
+        self.vault.delete()
+        for name in LEGACY_TOKEN_FILES:
             (self.tokens / name).unlink(missing_ok=True)
 
     def _save(self, garmin: Any) -> None:
-        self.tokens.mkdir(mode=0o700, parents=True, exist_ok=True)
-        path = self.tokens / TOKEN_FILE
-        path.write_text(garmin.client.dumps())
-        path.chmod(0o600)
+        self.vault.write(garmin.client.dumps())

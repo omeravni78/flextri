@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
-from .. import actions, paths
+from .. import actions, bank, paths
 from ..adaptation import apply_checkin
 from ..calendar_view import build_calendar
 from ..ceremony import summarize
@@ -38,7 +38,8 @@ def get_today() -> date:
 
 def plan_catalog() -> dict[str, Path]:
     """Plans the athlete can pick in the wizard, by id (file stem). The default template is always offered."""
-    plans = {p.stem: p for p in sorted(PLANS_DIR.glob("*.json"))} if PLANS_DIR.is_dir() else {}
+    files = bank.plan_files(PLANS_DIR) + (sorted(PLANS_DIR.glob("*.json")) if PLANS_DIR.is_dir() else [])
+    plans = {p.stem: p for p in files}
     plans.setdefault(TEMPLATE_PATH.stem, TEMPLATE_PATH)
     return plans
 
@@ -84,7 +85,7 @@ class ProfileIn(BaseModel):
 
 
 class ActionIn(BaseModel):
-    kind: Literal["easier", "swap", "move", "rest", "add"]
+    kind: Literal["easier", "swap", "move", "remove", "rest", "add"]
     workout_id: int | None = None
     discipline: Discipline | None = None
     new_date: date | None = None
@@ -172,6 +173,8 @@ def perform_action(schedule, day: date, a: ActionIn, today: date) -> list[str]:
         raise actions.ActionError("Pick a session")
     if a.kind == "easier":
         return actions.easier(schedule, a.workout_id, today)
+    if a.kind == "remove":
+        return actions.remove(schedule, a.workout_id, today)
     if a.kind == "swap":
         if a.discipline is None:
             raise actions.ActionError("Pick a sport to swap to")
