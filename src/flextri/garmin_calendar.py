@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any, Iterable, Protocol
 
-from .garmin import NAME_PREFIX
+from .garmin import is_flextri, sent_ids, short_title
 
 SPORTS = {"running": "run", "cycling": "bike", "swimming": "swim", "strength_training": "strength"}
 
@@ -49,26 +49,28 @@ def _minutes(item: dict[str, Any]) -> int | None:
     return None
 
 
-def _session(item: dict[str, Any]) -> GarminSession | None:
+def _session(item: dict[str, Any], sent: set[int]) -> GarminSession | None:
     if item.get("itemType") != "workout" or not item.get("id") or not item.get("date"):
         return None
     title = item.get("title") or "Workout"
+    workout_id = int(item["workoutId"]) if item.get("workoutId") else None
     return GarminSession(
         schedule_id=int(item["id"]),
-        workout_id=int(item["workoutId"]) if item.get("workoutId") else None,
+        workout_id=workout_id,
         day=date.fromisoformat(item["date"][:10]),
-        title=title.removeprefix(NAME_PREFIX),
+        title=short_title(title),
         sport=SPORTS.get(item.get("sportTypeKey") or "", "other"),
         minutes=_minutes(item),
-        from_flextri=title.startswith(NAME_PREFIX),
+        from_flextri=is_flextri(title, workout_id, sent),
     )
 
 
 def _calendar(client: GarminCalendar, start: date, end: date) -> list[GarminSession]:
     sessions = []
+    sent = sent_ids()
     for year, month in _months(start, end):
         for item in client.get_scheduled_workouts(year, month).get("calendarItems") or []:
-            session = _session(item)
+            session = _session(item, sent)
             if session is not None:
                 sessions.append(session)
     return sessions

@@ -1,80 +1,80 @@
-code,week,phase,day,slot,discipline,duration_min,intensity,key,description
-O_8_TRI_W1_S1,1,base,,swim,swim,20,2,,"900 m: drills, descending pace, paddle work"
-O_8_TRI_W1_G1,1,base,,strength,strength,20,2,,core routine
-O_8_TRI_W1_B1,1,base,,bike,bike,45,2,,"single-leg drills, high-cadence progression 90-110 rpm, easy gear"
-O_8_TRI_W1_R1,1,base,,run,run,30,2,,"easy run + drills (butt kicks, high knees, shuffles)"
-O_8_TRI_W1_R2,1,base,,run,run,40,2,,easy with 8x30s hill strides
-O_8_TRI_W1_G2,1,base,,strength,strength,20,2,,core routine
-O_8_TRI_W1_G3,1,base,,strength,strength,20,2,,core routine
-O_8_TRI_W1_R3,1,base,,run,run,45,3,,6x90s uphill efforts
-O_8_TRI_W1_S2,1,base,,swim,swim,35,2,,"1650 m: 4x150 pull/drill, descending/ascending 100s, catch-up drill"
-O_8_TRI_W1_B2,1,base,,long_ride,bike,120,2,yes,aerobic easy long ride
-O_8_TRI_W1_R4,1,base,,long_run,run,50,2,yes,easy long run
-O_8_TRI_W2_S1,2,base,,swim,swim,40,2,,"1750 m: single-arm w/ fins, pull, scull, fingertip drag, kick fast"
-O_8_TRI_W2_G1,2,base,,strength,strength,20,2,,core routine
-O_8_TRI_W2_B1,2,base,,bike,bike,60,2,,"single-leg intervals, cadence 100-120 rpm x2"
-O_8_TRI_W2_R1,2,base,,run,run,45,2,,"easy + drills, 6x20s strides"
-O_8_TRI_W2_S2,2,base,,swim,swim,40,3,,"1900 m: 3x200 swim/pull/swim, 8x50 drill/build/fast, 7x100 steady-strong"
-O_8_TRI_W2_B2,2,base,,bike,bike,60,3,,"single-leg, high cadence, big gear 95->55 rpm"
-O_8_TRI_W2_G2,2,base,,strength,strength,20,2,,core routine
-O_8_TRI_W2_R2,2,base,,run,run,45,3,,uphill/downhill cadence work
-O_8_TRI_W2_S3,2,base,,swim,swim,45,3,,"2100 m: 100s with drills, 8x200 pull, kick fast"
-O_8_TRI_W2_B3,2,base,,long_ride,bike,90,3,yes,big gear 60-65 rpm alternating with 90+ rpm spin
-O_8_TRI_W2_R3,2,base,,run,run,30,2,,easy run
-O_8_TRI_W2_R4,2,base,,long_run,run,50,4,yes,"ladder warm-up, 16 min of 1 min tempo / 1 min VO2"
-O_8_TRI_W3_S1,3,build,,swim,swim,40,3,,"1900 m: kick/pull, 10x50 steady, 10x50 strong, 10x50 at 80-85%"
-O_8_TRI_W3_G1,3,build,,strength,strength,20,2,,core routine
-O_8_TRI_W3_X1,3,build,,brick,brick,60,3,yes,bike 40 min (12x15s fast/45s easy) + run 20 min easy off the bike
-O_8_TRI_W3_S2,3,build,,swim,swim,50,4,,"2300 m: 500 wu, 20x25 fast, 500 pull, 20x25 fast, 500 cd"
-O_8_TRI_W3_B1,3,build,,bike,bike,60,3,,3x16 min: 4 min tempo at varying cadence/position
-O_8_TRI_W3_G2,3,build,,strength,strength,20,2,,core routine
-O_8_TRI_W3_R1,3,build,,run,run,45,3,,6x90s uphill efforts
-O_8_TRI_W3_S3,3,build,,swim,swim,45,3,,"2100 m: descending 100s, 2x1000 with second faster"
-O_8_TRI_W3_B2,3,build,,long_ride,bike,90,3,yes,4x9 min big gear 55-65 rpm + 3x10 min tempo
-O_8_TRI_W3_R2,3,build,,run,run,45,2,,easy + strides and drills
-O_8_TRI_W3_R3,3,build,,long_run,run,60,3,yes,4x(2 min tempo/1 min easy x2)
-O_8_TRI_W4_S1,4,build,,swim,swim,40,3,,"1850 m: descending 100s, head-up drill, 5x100 race effort, 5x100 above race effort"
-O_8_TRI_W4_G1,4,build,,strength,strength,20,2,,core routine
-O_8_TRI_W4_X1,4,build,,brick,brick,90,4,yes,bike 60 min (15x1 min power/1 min easy) + run 30 min with strides
-O_8_TRI_W4_S2,4,build,,swim,swim,50,3,,"2300 m: 100 swim/drill/kick, 10x200 with gear"
-O_8_TRI_W4_B1,4,build,,bike,bike,90,3,,3x10 min aero position 85-95 rpm
-O_8_TRI_W4_G2,4,build,,strength,strength,20,2,,core routine
-O_8_TRI_W4_R1,4,build,,run,run,60,4,,"track: drills, 10x200 high cadence"
-O_8_TRI_W4_S3,4,build,,swim,swim,40,3,,"1850 m: 2 rounds with/without fins, fast/easy mixes"
-O_8_TRI_W4_B2,4,build,,long_ride,bike,120,3,yes,5x15 min tempo in race position 90-95 rpm
-O_8_TRI_W4_R2,4,build,,long_run,run,60,3,yes,"3x10 min relaxed-to-tempo progression, strides"
-O_8_TRI_W5_S1,5,build,,swim,swim,30,4,,"1300 m: 400 time trial, 3x200 pull"
-O_8_TRI_W5_B1,5,build,,bike,bike,60,1,,easy ride
-O_8_TRI_W5_X1,5,build,,brick,brick,100,4,yes,"bike 60 min (5x30s/1min/2min hard) + run 40 min (10 min race pace, 10x1 min above race pace)"
-O_8_TRI_W5_S2,5,build,,swim,swim,50,3,,"2400 m: descending 50s, 4x(100 fast/300 race/100 easy) pull"
-O_8_TRI_W5_B2,5,build,,bike,bike,60,3,,6x5 min big gear 50-60 rpm
-O_8_TRI_W5_S3,5,build,,swim,swim,50,3,,2300 m: 40x50 fast/steady combinations
-O_8_TRI_W5_R1,5,build,,run,run,50,4,,"track: 3x600 at 80%, 6x200 at 85-90%"
-O_8_TRI_W5_B3,5,build,,long_ride,bike,150,3,yes,2x(3x15 min TT tempo at 80-90 rpm)
-O_8_TRI_W5_R2,5,build,,long_run,run,70,4,yes,"10x3 min tempo-to-threshold, 90s easy"
-O_8_TRI_W6_S1,6,peak,,swim,swim,65,3,,"3000 m: 8x100 steady, 8x100 race, 8x100 above race"
-O_8_TRI_W6_B1,6,peak,,bike,bike,60,3,,10x1 min 105 rpm + 4x5 min 50-60 rpm
-O_8_TRI_W6_X1,6,peak,,brick,brick,120,4,yes,"bike 90 min (2x10 min tempo, 8x1 min hard) + run 30 min (5x2 min race effort)"
-O_8_TRI_W6_S2,6,peak,,swim,swim,40,2,,"1850 m: continuous, relaxed"
-O_8_TRI_W6_B2,6,peak,,bike,bike,60,3,,30 min progressive big gear in race position
-O_8_TRI_W6_S3,6,peak,,swim,swim,35,3,,"1700 m: paddle skill work, sprint/steady combos"
-O_8_TRI_W6_R1,6,peak,,run,run,20,4,,threshold intervals
-O_8_TRI_W6_B3,6,peak,,long_ride,bike,120,4,yes,3 rounds of 2x6 min TT efforts
-O_8_TRI_W6_R2,6,peak,,long_run,run,60,3,yes,"thirds: easy, tempo, tempo-to-threshold"
-O_8_TRI_W7_S1,7,peak,,swim,swim,60,3,,"2750 m: 3x200 swim/pull/kick, 15x100 relaxed/steady/faster, 25x25 fast"
-O_8_TRI_W7_X1,7,peak,,brick,brick,120,4,yes,bike 90 min (8x3 min TT threshold) + run 30 min (10 easy/10 race pace/10 easy)
-O_8_TRI_W7_S2,7,peak,,swim,swim,45,2,,"2000 m: drills: single-arm, pull, scull, kick"
-O_8_TRI_W7_B1,7,peak,,bike,bike,90,3,,3x8 min big gear on 2-3% incline
-O_8_TRI_W7_S3,7,peak,,swim,swim,30,3,,"1350 m: descending 50s, fast 25s with fins"
-O_8_TRI_W7_R1,7,peak,,run,run,60,4,yes,track pyramid around 10K/5K pace
-O_8_TRI_W7_B2,7,peak,,long_ride,bike,90,4,yes,2x(3x4 min threshold in TT position)
-O_8_TRI_W7_R2,7,peak,,run,run,30,2,,easy run
-O_8_TRI_W7_R3,7,peak,,long_run,run,45,3,,"race warm-up rehearsal, first 3 miles at race pace, 6 strides"
-O_8_TRI_W8_S1,8,taper,,swim,swim,50,3,,"2400 m: descending 50s, 2x(8x100 at race pace)"
-O_8_TRI_W8_X1,8,taper,,brick,brick,55,3,yes,"bike 45 min (3x2 min build, 5 min tempo) + run 10 min (3 min race pace, 5x30s fast)"
-O_8_TRI_W8_S2,8,taper,,swim,swim,25,2,,"1100 m: 3x200 pull buoy, kick build"
-O_8_TRI_W8_B1,8,taper,,bike,bike,45,1,,easy ride
-O_8_TRI_W8_R1,8,taper,,pre_race,run,10,2,,pre-race: 4x30s strides
-O_8_TRI_W8_B2,8,taper,,pre_race,bike,15,2,,"pre-race: 5 min build, 4x30s faster"
-O_8_TRI_W8_S3,8,taper,,pre_race,swim,5,2,,"pre-race: progressive 100, 2-3 race starts"
-O_8_TRI_W8_R2,8,taper,,race,run,0,5,yes,"RACE DAY: Olympic triathlon (1.5 km swim, 40 km bike, 10 km run)"
+code,week,phase,day,slot,discipline,duration_min,intensity,key,description,steps
+O_8_TRI_W1_S1,1,base,,swim,swim,20,2,,"900 m: drills, descending pace, paddle work",wu 200m [easy]; 4x(50m [drill]); 3x(100m [descend: each faster]); 2x(50m [with paddles]); cd 100m [easy]
+O_8_TRI_W1_G1,1,base,,strength,strength,20,2,,core routine,
+O_8_TRI_W1_B1,1,base,,bike,bike,45,2,,"single-leg drills, high-cadence progression 90-110 rpm, easy gear","wu 10min z1; 4x(1min [single-leg, left], 1min [single-leg, right], 2min z2 [both legs]); 2min [90 rpm]; 2min [95 rpm]; 2min [100 rpm]; 2min [105 rpm]; 2min [110 rpm]; * z2 [easy gear]; cd 5min z1"
+O_8_TRI_W1_R1,1,base,,run,run,30,2,,"easy run + drills (butt kicks, high knees, shuffles)","* z2 [easy run]; 3x(30s [butt kicks], 30s [high knees], 30s [shuffles], 30s z1 [walk back])"
+O_8_TRI_W1_R2,1,base,,run,run,40,2,,easy with 8x30s hill strides,"* z2 [easy]; 8x(30s [hill stride, fast but relaxed], 90s z1 [jog back down]); cd 5min z1"
+O_8_TRI_W1_G2,1,base,,strength,strength,20,2,,core routine,
+O_8_TRI_W1_G3,1,base,,strength,strength,20,2,,core routine,
+O_8_TRI_W1_R3,1,base,,run,run,45,3,,6x90s uphill efforts,"wu 15min z2; 6x(90s z4 [uphill, strong], 2min z1 [jog back down]); cd * z1"
+O_8_TRI_W1_S2,1,base,,swim,swim,35,2,,"1650 m: 4x150 pull/drill, descending/ascending 100s, catch-up drill",wu 200m; 4x(150m [pull / drill]); 3x(100m [descend: each faster]); 3x(100m [ascend: each easier]); 2x(50m [catch-up drill]); cd 150m
+O_8_TRI_W1_B2,1,base,,long_ride,bike,120,2,yes,aerobic easy long ride,"* z2 [aerobic, easy]"
+O_8_TRI_W1_R4,1,base,,long_run,run,50,2,yes,easy long run,* z2 [easy long run]
+O_8_TRI_W2_S1,2,base,,swim,swim,40,2,,"1750 m: single-arm w/ fins, pull, scull, fingertip drag, kick fast","wu 300m; 4x(50m [single-arm, with fins]); 4x(100m [pull]); 4x(50m [scull]); 4x(50m [fingertip drag]); 6x(50m [kick, fast]); cd 150m"
+O_8_TRI_W2_G1,2,base,,strength,strength,20,2,,core routine,
+O_8_TRI_W2_B1,2,base,,bike,bike,60,2,,"single-leg intervals, cadence 100-120 rpm x2","wu 10min z1; 2x(3min [single-leg, left], 3min [single-leg, right], 4min [cadence 100-120 rpm], 2min z1 [easy]); * z2; cd 5min z1"
+O_8_TRI_W2_R1,2,base,,run,run,45,2,,"easy + drills, 6x20s strides","* z2 [easy]; 3min [drills: butt kicks, high knees]; 6x(20s [stride, fast but relaxed], 40s z1 [walk or jog back]); cd 5min z1"
+O_8_TRI_W2_S2,2,base,,swim,swim,40,3,,"1900 m: 3x200 swim/pull/swim, 8x50 drill/build/fast, 7x100 steady-strong",wu 200m; 3x(200m [swim / pull / swim]); 8x(50m [drill / build / fast]); 7x(100m [steady to strong])
+O_8_TRI_W2_B2,2,base,,bike,bike,60,3,,"single-leg, high cadence, big gear 95->55 rpm","wu 10min z1; 4min [single-leg drills]; 5min [high cadence, 100+ rpm]; 2min z3 [95 rpm]; 2min z3 [85 rpm]; 2min z3 [75 rpm]; 2min z3 [65 rpm]; 2min z3 [55 rpm, big gear]; * z2; cd 5min z1"
+O_8_TRI_W2_G2,2,base,,strength,strength,20,2,,core routine,
+O_8_TRI_W2_R2,2,base,,run,run,45,3,,uphill/downhill cadence work,"wu 15min z2; 6x(1min z3 [uphill, short quick steps], 1min z2 [downhill, quick cadence]); * z2; cd 5min z1"
+O_8_TRI_W2_S3,2,base,,swim,swim,45,3,,"2100 m: 100s with drills, 8x200 pull, kick fast","wu 200m; 2x(100m [with drill]); 8x(200m [pull]); 4x(25m [kick, fast])"
+O_8_TRI_W2_B3,2,base,,long_ride,bike,90,3,yes,big gear 60-65 rpm alternating with 90+ rpm spin,"wu 15min z1; 4x(5min z3 [big gear, 60-65 rpm], 5min z2 [spin, 90+ rpm]); * z2; cd 10min z1"
+O_8_TRI_W2_R3,2,base,,run,run,30,2,,easy run,* z2 [easy run]
+O_8_TRI_W2_R4,2,base,,long_run,run,50,4,yes,"ladder warm-up, 16 min of 1 min tempo / 1 min VO2","wu 10min z2; 4x(30s [ladder: build], 30s z1 [easy]); 8x(1min z4 [tempo], 1min z5 [VO2]); cd * z1"
+O_8_TRI_W3_S1,3,build,,swim,swim,40,3,,"1900 m: kick/pull, 10x50 steady, 10x50 strong, 10x50 at 80-85%",wu 200m; 4x(50m [kick / pull]); 10x(50m [steady]); 10x(50m [strong]); 10x(50m [80-85% effort])
+O_8_TRI_W3_G1,3,build,,strength,strength,20,2,,core routine,
+O_8_TRI_W3_X1,3,build,,brick,brick,60,3,yes,bike 40 min (12x15s fast/45s easy) + run 20 min easy off the bike,"bike: wu 10min z1; 12x(15s [fast], 45s z2 [easy]); 15min z2; cd 3min z1 | run: 20min z2 [easy off the bike]"
+O_8_TRI_W3_S2,3,build,,swim,swim,50,4,,"2300 m: 500 wu, 20x25 fast, 500 pull, 20x25 fast, 500 cd",wu 500m; 20x(25m [fast]); 500m [pull]; 20x(25m [fast]); cd 500m
+O_8_TRI_W3_B1,3,build,,bike,bike,60,3,,3x16 min: 4 min tempo at varying cadence/position,"wu 8min z1; 3x(4min z3 [tempo, 75 rpm], 4min z3 [tempo, 95 rpm], 4min z3 [tempo, aero position], 4min z2 [easy]); cd * z1"
+O_8_TRI_W3_G2,3,build,,strength,strength,20,2,,core routine,
+O_8_TRI_W3_R1,3,build,,run,run,45,3,,6x90s uphill efforts,"wu 15min z2; 6x(90s z4 [uphill, strong], 2min z1 [jog back down]); cd * z1"
+O_8_TRI_W3_S3,3,build,,swim,swim,45,3,,"2100 m: descending 100s, 2x1000 with second faster",wu 300m; 4x(100m [descend: each faster]); 700m [steady]; 700m [faster than the first]
+O_8_TRI_W3_B2,3,build,,long_ride,bike,90,3,yes,4x9 min big gear 55-65 rpm + 3x10 min tempo,"wu 10min z1; 4x(9min z3 [big gear, 55-65 rpm], 1min z1 [easy spin]); 3x(10min z4 [tempo], 2min z1 [easy]); cd * z1"
+O_8_TRI_W3_R2,3,build,,run,run,45,2,,easy + strides and drills,"* z2 [easy]; 3min [drills: butt kicks, high knees]; 6x(20s [stride, fast but relaxed], 40s z1 [walk or jog back]); cd 5min z1"
+O_8_TRI_W3_R3,3,build,,long_run,run,60,3,yes,4x(2 min tempo/1 min easy x2),"wu 15min z2; 4x(2min z4 [tempo], 1min z2 [easy], 2min z4 [tempo], 1min z2 [easy]); * z2; cd 5min z1"
+O_8_TRI_W4_S1,4,build,,swim,swim,40,3,,"1850 m: descending 100s, head-up drill, 5x100 race effort, 5x100 above race effort",wu 250m; 4x(100m [descend: each faster]); 4x(50m [head-up drill]); 5x(100m [race effort]); 5x(100m [above race effort])
+O_8_TRI_W4_G1,4,build,,strength,strength,20,2,,core routine,
+O_8_TRI_W4_X1,4,build,,brick,brick,90,4,yes,bike 60 min (15x1 min power/1 min easy) + run 30 min with strides,"bike: wu 10min z1; 15x(1min [power, hard], 1min z2 [easy]); 15min z2; cd 5min z1 | run: 20min z2; 6x(20s [stride, fast but relaxed], 40s z1 [walk or jog back]); 4min z2"
+O_8_TRI_W4_S2,4,build,,swim,swim,50,3,,"2300 m: 100 swim/drill/kick, 10x200 with gear",3x(100m [swim / drill / kick]); 10x(200m [with paddles and pull buoy])
+O_8_TRI_W4_B1,4,build,,bike,bike,90,3,,3x10 min aero position 85-95 rpm,"wu 15min z1; 3x(10min z3 [aero position, 85-95 rpm], 5min z1 [easy]); * z2; cd 10min z1"
+O_8_TRI_W4_G2,4,build,,strength,strength,20,2,,core routine,
+O_8_TRI_W4_R1,4,build,,run,run,60,4,,"track: drills, 10x200 high cadence","wu 15min z2; 5min [drills]; 10x(200m [fast, high cadence], 90s z1 [jog]); cd 10min z1"
+O_8_TRI_W4_S3,4,build,,swim,swim,40,3,,"1850 m: 2 rounds with/without fins, fast/easy mixes","wu 250m; 4x(50m [fins: fast], 50m [fins: easy]); 4x(50m [no fins: fast], 50m [no fins: easy]); 4x(50m [fins: fast], 50m [fins: easy]); 4x(50m [no fins: fast], 50m [no fins: easy])"
+O_8_TRI_W4_B2,4,build,,long_ride,bike,120,3,yes,5x15 min tempo in race position 90-95 rpm,"wu 15min z1; 5x(15min z4 [tempo, race position, 90-95 rpm], 3min z1 [easy]); cd * z1"
+O_8_TRI_W4_R2,4,build,,long_run,run,60,3,yes,"3x10 min relaxed-to-tempo progression, strides","wu 10min z2; 3x(10min z3 [relaxed, building to tempo], 2min z1 [easy]); 6x(20s [stride, fast but relaxed], 40s z1 [walk or jog back]); cd * z1"
+O_8_TRI_W5_S1,5,build,,swim,swim,30,4,,"1300 m: 400 time trial, 3x200 pull",wu 300m; 400m [time trial: all out]; 3x(200m [pull])
+O_8_TRI_W5_B1,5,build,,bike,bike,60,1,,easy ride,* z1 [easy ride]
+O_8_TRI_W5_X1,5,build,,brick,brick,100,4,yes,"bike 60 min (5x30s/1min/2min hard) + run 40 min (10 min race pace, 10x1 min above race pace)","bike: wu 10min z1; 5x(30s [hard], 1min z2 [easy], 1min [hard], 1min z2 [easy], 2min z4 [hard], 2min z2 [easy]); 10min z2; cd 2min30s z1 | run: 5min z2 [settle in]; 10min z4 [race pace]; 10x(1min z5 [above race pace], 1min z2 [easy]); cd 5min z1"
+O_8_TRI_W5_S2,5,build,,swim,swim,50,3,,"2400 m: descending 50s, 4x(100 fast/300 race/100 easy) pull","wu 200m; 4x(50m [descend: each faster]); 4x(100m [pull: fast], 300m [pull: race pace], 100m [pull: easy])"
+O_8_TRI_W5_B2,5,build,,bike,bike,60,3,,6x5 min big gear 50-60 rpm,"wu 10min z1; 6x(5min z3 [big gear, 50-60 rpm], 2min z1 [easy]); cd * z1"
+O_8_TRI_W5_S3,5,build,,swim,swim,50,3,,2300 m: 40x50 fast/steady combinations,"wu 300m; 20x(50m [fast], 50m [steady])"
+O_8_TRI_W5_R1,5,build,,run,run,50,4,,"track: 3x600 at 80%, 6x200 at 85-90%","wu 15min z2; 3x(600m [80% effort], 2min z1 [jog]); 6x(200m [85-90% effort], 90s z1 [jog]); cd 10min z1"
+O_8_TRI_W5_B3,5,build,,long_ride,bike,150,3,yes,2x(3x15 min TT tempo at 80-90 rpm),"wu 15min z1; 3x(15min z4 [TT tempo, 80-90 rpm], 3min z1 [easy]); 10min z1 [easy between sets]; 3x(15min z4 [TT tempo, 80-90 rpm], 3min z1 [easy]); cd * z1"
+O_8_TRI_W5_R2,5,build,,long_run,run,70,4,yes,"10x3 min tempo-to-threshold, 90s easy","wu 15min z2; 10x(3min z4 [tempo to threshold], 90s z1 [easy]); cd * z1"
+O_8_TRI_W6_S1,6,peak,,swim,swim,65,3,,"3000 m: 8x100 steady, 8x100 race, 8x100 above race",wu 400m; 8x(100m [steady]); 8x(100m [race pace]); 8x(100m [above race pace]); cd 200m
+O_8_TRI_W6_B1,6,peak,,bike,bike,60,3,,10x1 min 105 rpm + 4x5 min 50-60 rpm,"wu 10min z1; 10x(1min [105 rpm], 1min z2 [easy]); 4x(5min z3 [big gear, 50-60 rpm], 2min z1 [easy]); cd * z1"
+O_8_TRI_W6_X1,6,peak,,brick,brick,120,4,yes,"bike 90 min (2x10 min tempo, 8x1 min hard) + run 30 min (5x2 min race effort)","bike: wu 15min z1; 2x(10min z4 [tempo], 3min z1 [easy]); 8x(1min [hard], 2min z2 [easy]); 20min z2; cd 5min z1 | run: 5min z2; 5x(2min z4 [race effort], 1min z2 [easy]); 5min z2; cd 5min z1"
+O_8_TRI_W6_S2,6,peak,,swim,swim,40,2,,"1850 m: continuous, relaxed","1850m [continuous, relaxed]"
+O_8_TRI_W6_B2,6,peak,,bike,bike,60,3,,30 min progressive big gear in race position,"wu 15min z1; 10min z2 [big gear, race position]; 10min z3 [big gear, a bit harder]; 10min z4 [big gear, harder again]; cd * z1"
+O_8_TRI_W6_S3,6,peak,,swim,swim,35,3,,"1700 m: paddle skill work, sprint/steady combos","wu 300m; 4x(100m [paddles: skill focus]); 10x(50m [sprint], 50m [steady])"
+O_8_TRI_W6_R1,6,peak,,run,run,20,4,,threshold intervals,"wu 5min z2; 3x(3min z4 [threshold], 1min z1 [easy]); cd * z1"
+O_8_TRI_W6_B3,6,peak,,long_ride,bike,120,4,yes,3 rounds of 2x6 min TT efforts,"wu 15min z1; 3x(6min z4 [TT effort], 2min z1 [easy], 6min z4 [TT effort], 6min z1 [easy between rounds]); * z2; cd 10min z1"
+O_8_TRI_W6_R2,6,peak,,long_run,run,60,3,yes,"thirds: easy, tempo, tempo-to-threshold",* z2 [first third: easy]; 20min z3 [second third: tempo]; 20min z4 [last third: tempo to threshold]
+O_8_TRI_W7_S1,7,peak,,swim,swim,60,3,,"2750 m: 3x200 swim/pull/kick, 15x100 relaxed/steady/faster, 25x25 fast","3x(200m [swim / pull / kick]); 5x(100m [relaxed], 100m [steady], 100m [faster]); 25x(25m [fast])"
+O_8_TRI_W7_X1,7,peak,,brick,brick,120,4,yes,bike 90 min (8x3 min TT threshold) + run 30 min (10 easy/10 race pace/10 easy),"bike: wu 15min z1; 8x(3min z4 [TT threshold], 2min z1 [easy]); 30min z2; cd 5min z1 | run: 10min z2 [easy]; 10min z4 [race pace]; 10min z2 [easy]"
+O_8_TRI_W7_S2,7,peak,,swim,swim,45,2,,"2000 m: drills: single-arm, pull, scull, kick",wu 300m; 4x(100m [single-arm drill]); 4x(100m [pull]); 4x(100m [scull]); 4x(100m [kick]); cd 100m
+O_8_TRI_W7_B1,7,peak,,bike,bike,90,3,,3x8 min big gear on 2-3% incline,"wu 15min z1; 3x(8min z3 [big gear on a 2-3% climb], 4min z1 [easy]); * z2; cd 10min z1"
+O_8_TRI_W7_S3,7,peak,,swim,swim,30,3,,"1350 m: descending 50s, fast 25s with fins","wu 400m; 12x(50m [descend 1-3: each faster]); 8x(25m [fast, with fins]); cd 150m"
+O_8_TRI_W7_R1,7,peak,,run,run,60,4,yes,track pyramid around 10K/5K pace,wu 15min z2; 400m [5K pace]; rec 90s z1 [jog]; 800m [10K pace]; rec 2min z1 [jog]; 1200m [10K pace]; rec 2min z1 [jog]; 800m [10K pace]; rec 2min z1 [jog]; 400m [5K pace]; cd 10min z1
+O_8_TRI_W7_B2,7,peak,,long_ride,bike,90,4,yes,2x(3x4 min threshold in TT position),"wu 15min z1; 3x(4min z4 [threshold, TT position], 2min z1 [easy]); 5min z1 [easy between sets]; 3x(4min z4 [threshold, TT position], 2min z1 [easy]); * z2; cd 10min z1"
+O_8_TRI_W7_R2,7,peak,,run,run,30,2,,easy run,* z2 [easy run]
+O_8_TRI_W7_R3,7,peak,,long_run,run,45,3,,"race warm-up rehearsal, first 3 miles at race pace, 6 strides","wu 10min z2 [race warm-up]; 4x(20s [stride], 40s z1 [easy]); 4800m z4 [race pace (3 miles)]; 6x(20s [stride, fast but relaxed], 40s z1 [walk or jog back]); cd 5min z1"
+O_8_TRI_W8_S1,8,taper,,swim,swim,50,3,,"2400 m: descending 50s, 2x(8x100 at race pace)","wu 400m; 8x(50m [descend: each faster]); 8x(100m [race pace, set 1]); 8x(100m [race pace, set 2])"
+O_8_TRI_W8_X1,8,taper,,brick,brick,55,3,yes,"bike 45 min (3x2 min build, 5 min tempo) + run 10 min (3 min race pace, 5x30s fast)","bike: wu 10min z1; 3x(2min z3 [build], 1min z1 [easy]); 5min z4 [tempo]; 18min z2; cd 3min z1 | run: 3min z4 [race pace]; 5x(30s [fast], 30s z1 [easy]); 2min z1"
+O_8_TRI_W8_S2,8,taper,,swim,swim,25,2,,"1100 m: 3x200 pull buoy, kick build","wu 300m; 3x(200m [pull buoy]); 4x(50m [kick, build])"
+O_8_TRI_W8_B1,8,taper,,bike,bike,45,1,,easy ride,* z1 [easy ride]
+O_8_TRI_W8_R1,8,taper,,pre_race,run,10,2,,pre-race: 4x30s strides,"* z2 [easy]; 4x(30s [stride], 30s z1 [easy])"
+O_8_TRI_W8_B2,8,taper,,pre_race,bike,15,2,,"pre-race: 5 min build, 4x30s faster","* z2 [easy]; 5min z3 [build]; 4x(30s [faster], 30s z1 [easy])"
+O_8_TRI_W8_S3,8,taper,,pre_race,swim,5,2,,"pre-race: progressive 100, 2-3 race starts",100m [progressive]; 3x(25m [race start: fast])
+O_8_TRI_W8_R2,8,taper,,race,run,0,5,yes,"RACE DAY: Olympic triathlon (1.5 km swim, 40 km bike, 10 km run)",

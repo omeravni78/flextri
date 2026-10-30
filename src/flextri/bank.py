@@ -24,14 +24,15 @@ import re
 import sys
 from collections import Counter
 from dataclasses import asdict, dataclass, fields
+from functools import lru_cache
 from pathlib import Path
 
-from . import paths
+from . import paths, steps
 from .models import Discipline, Distance
 
 INDEX = "plans.csv"
 INDEX_COLUMNS = ["code", "name", "race", "weeks", "source", "notes"]
-PLAN_COLUMNS = ["code", "week", "phase", "day", "slot", "discipline", "duration_min", "intensity", "key", "description"]
+PLAN_COLUMNS = ["code", "week", "phase", "day", "slot", "discipline", "duration_min", "intensity", "key", "description", "steps"]
 RACE_LETTERS = {Distance.SPRINT: "S", Distance.OLYMPIC: "O", Distance.HALF: "H", Distance.FULL: "I"}
 DISCIPLINE_LETTERS = {
     Discipline.SWIM: "S", Discipline.BIKE: "B", Discipline.RUN: "R",
@@ -104,6 +105,8 @@ def read_plan(path: Path) -> dict:
             "key": r["key"].strip().lower() in ("1", "true", "yes", "y"),
             "slot": r["slot"] or None, "code": r["code"] or None,
         }
+        if (r.get("steps") or "").strip():
+            session["steps"] = r["steps"].strip()
         if r["day"].strip():
             week["days"].setdefault(str(int(r["day"])), []).append(session)
         else:
@@ -125,7 +128,7 @@ def write_plan(plan: dict, path: Path) -> None:
                     "code": s.get("code") or "", "week": i, "phase": week["phase"], "day": day,
                     "slot": s.get("slot") or "", "discipline": s["discipline"], "duration_min": s["duration_min"],
                     "intensity": s.get("intensity", 2), "key": "yes" if s.get("key") else "",
-                    "description": s.get("description", ""),
+                    "description": s.get("description", ""), "steps": s.get("steps", ""),
                 })
 
 
@@ -181,8 +184,36 @@ def check_plan(plan: dict) -> list[str]:
                 problems.append(f"week {i}: {c} does not fit {code}_W{i}_{letter}<n>")
             elif c in seen:
                 problems.append(f"{c} is used twice")
+            if s.get("steps"):
+                try:
+                    steps.check(s["steps"], s["discipline"])
+                except ValueError as e:
+                    problems.append(f"week {i}: {c or s['discipline']} steps: {e}")
             seen.add(c)
     return problems
+
+
+@lru_cache(maxsize=1)
+def _steps_index() -> dict[str, tuple[str, int, str]]:
+    index = {}
+    for path in plan_files():
+        for week in read_plan(path)["weeks"]:
+            for _, s in _week_sessions(week):
+                if s.get("code") and s.get("steps"):
+                    index[s["code"]] = (s.get("description", ""), s.get("intensity", 2), s["steps"])
+    return index
+
+
+def steps_for(code: str | None, description: str, intensity: int) -> str | None:
+    """The watch steps the plan gives this workout, or None.
+
+    Only while the workout is still the plan's: once flexTri has eased it (lower zone) or
+    swapped it, the plan's intervals no longer fit, so the caller falls back to plain steps.
+    """
+    found = _steps_index().get(code or "")
+    if found and found[0] == description and found[1] == intensity:
+        return found[2]
+    return None
 
 
 def bank_from_plan(plan: dict) -> list[BankWorkout]:
