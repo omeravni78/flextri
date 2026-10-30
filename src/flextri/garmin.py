@@ -200,8 +200,13 @@ def _fit(plan: steps.Steps, seconds: int) -> tuple[int, int] | None:
     return (fill, seconds) if fill >= 60 else None
 
 
+def _last_order(workout_steps: list[dict[str, Any]]) -> int:
+    return max([s["stepOrder"] for s in workout_steps]
+               + [_last_order(s["workoutSteps"]) for s in workout_steps if s.get("workoutSteps")])
+
+
 def _payload(discipline: Discipline, minutes: int, w: Workout, name: str,
-             plan: steps.Steps | None = None) -> dict[str, Any]:
+             plan: steps.Steps | None = None, open_cooldown: bool = True) -> dict[str, Any]:
     sport_id, sport_key, order = _SPORTS[discipline]
     sport = {"sportTypeId": sport_id, "sportTypeKey": sport_key, "displayOrder": order}
     swim = discipline == Discipline.SWIM
@@ -210,6 +215,11 @@ def _payload(discipline: Discipline, minutes: int, w: Workout, name: str,
         workout_steps, seconds = _plan_steps(plan, fit[0], swim), fit[1]
     else:
         workout_steps, seconds = _plain_steps(minutes, w.intensity, hr_target=not swim), minutes * 60
+    if open_cooldown:
+        # An extra cool-down after the planned one that runs until the athlete presses Lap, so the
+        # watch keeps recording the walk or easy spin home instead of ending the workout.
+        workout_steps.append(_step(_last_order(workout_steps) + 1, "cooldown", "lap", None, None,
+                                   "Extra cool-down: press Lap to finish"))
     payload = {
         "workoutName": name,
         # The full plan text, since the name is cut at 32 characters.
@@ -253,8 +263,9 @@ def to_garmin_workouts(sw: ScheduledWorkout) -> list[dict[str, Any]]:
             if sport in minutes and not steps.has_fill(leg) and steps.fixed_seconds(leg):
                 minutes[sport] = round(steps.fixed_seconds(leg) / 60)
         return [
+            # No open cool-down after a brick's ride: the run follows straight away.
             _payload(Discipline.BIKE, minutes["bike"], w, workout_name(Discipline.BIKE, _brick_part(label, "bike")),
-                     legs.get("bike")),
+                     legs.get("bike"), open_cooldown=False),
             _payload(Discipline.RUN, minutes["run"], w, workout_name(Discipline.RUN, _brick_part(label, "run")),
                      legs.get("run")),
         ]

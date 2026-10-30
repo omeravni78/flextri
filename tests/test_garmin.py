@@ -30,7 +30,7 @@ def test_run_gets_warmup_main_cooldown_in_hr_zone():
     [p] = to_garmin_workouts(_sw(1, date(2026, 10, 6), Discipline.RUN, 40, 3, "tempo run"))
     assert p["workoutName"] == "RUN tempo run"
     assert p["sportType"] == {"sportTypeId": 1, "sportTypeKey": "running", "displayOrder": 1}
-    steps = p["workoutSegments"][0]["workoutSteps"]
+    steps = p["workoutSegments"][0]["workoutSteps"][:-1]  # the last is the open cool-down
     assert [s["stepType"]["stepTypeKey"] for s in steps] == ["warmup", "interval", "cooldown"]
     assert sum(s["endConditionValue"] for s in steps) == 40 * 60
     assert steps[1]["zoneNumber"] == 3
@@ -38,7 +38,7 @@ def test_run_gets_warmup_main_cooldown_in_hr_zone():
 
 def test_swim_has_no_hr_target_and_short_session_is_one_step():
     [p] = to_garmin_workouts(_sw(1, date(2026, 10, 6), Discipline.SWIM, 15))
-    [step] = p["workoutSegments"][0]["workoutSteps"]
+    step, _open_cooldown = p["workoutSegments"][0]["workoutSteps"]
     assert step["targetType"]["workoutTargetTypeKey"] == "no.target"
     assert "zoneNumber" not in step
     # id 3 is Garmin's "other" sport, which is why swims used to look like everything else
@@ -132,3 +132,14 @@ def test_push_remembers_the_workouts_it_created():
     assert is_flextri("RUN easy run", 1, sent_ids())
     assert is_flextri("flexTri: easy run")  # sent before ids were saved
     assert not is_flextri("Morning run", 2, sent_ids())
+
+
+def test_every_workout_ends_with_a_cooldown_until_lap_except_a_bricks_ride():
+    [run] = to_garmin_workouts(_sw(1, date(2026, 10, 6), Discipline.RUN, 40, 3, "tempo run"))
+    *_, last = run["workoutSegments"][0]["workoutSteps"]
+    assert last["stepType"]["stepTypeKey"] == "cooldown"
+    assert last["endCondition"]["conditionTypeKey"] == "lap.button"
+    assert last["stepOrder"] == 4 and last["targetType"]["workoutTargetTypeKey"] == "no.target"
+    bike, brick_run = to_garmin_workouts(_sw(1, date(2026, 10, 6), Discipline.BRICK, 90, desc="brick"))
+    ends = [w["workoutSegments"][0]["workoutSteps"][-1]["endCondition"]["conditionTypeKey"] for w in (bike, brick_run)]
+    assert ends == ["time", "lap.button"]

@@ -45,7 +45,7 @@ def test_brick_legs_and_check():
 def test_strides_run_reaches_garmin_as_written():
     """The run from omer's test: 40 min, zone 2, 'easy with 8x30s hill strides'."""
     [p] = to_garmin_workouts(_sw(Discipline.RUN, 40, 2, "easy with 8x30s hill strides", "O_8_TRI_W1_R2"))
-    easy, repeat, cd = p["workoutSegments"][0]["workoutSteps"]
+    easy, repeat, cd, open_cd = p["workoutSegments"][0]["workoutSteps"]
     assert (easy["endConditionValue"], easy["zoneNumber"]) == (19 * 60, 2)  # what's left after strides and cool-down
     assert repeat["type"] == "RepeatGroupDTO" and repeat["numberOfIterations"] == 8
     stride, back = repeat["workoutSteps"]
@@ -55,6 +55,7 @@ def test_strides_run_reaches_garmin_as_written():
     assert [s["stepOrder"] for s in (easy, repeat, stride, back, cd)] == [1, 2, 3, 4, 5]
     assert stride["childStepId"] == back["childStepId"] == repeat["childStepId"]
     assert cd["stepType"]["stepTypeKey"] == "cooldown"
+    assert (open_cd["stepOrder"], open_cd["endCondition"]["conditionTypeKey"]) == (6, "lap.button")
     assert p["estimatedDurationInSecs"] == 40 * 60
 
 
@@ -68,7 +69,7 @@ def test_eased_or_too_short_sessions_fall_back_to_plain_steps():
     squeezed = _sw(Discipline.RUN, 20, 2, "easy with 8x30s hill strides", "O_8_TRI_W1_R2")
     for sw in (eased, squeezed):
         [p] = to_garmin_workouts(sw)
-        kinds = [s["stepType"]["stepTypeKey"] for s in p["workoutSegments"][0]["workoutSteps"]]
+        kinds = [s["stepType"]["stepTypeKey"] for s in p["workoutSegments"][0]["workoutSteps"][:-1]]
         assert kinds in (["warmup", "interval", "cooldown"], ["interval"])
 
 
