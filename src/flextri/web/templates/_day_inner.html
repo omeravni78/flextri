@@ -13,6 +13,7 @@
 .dayp .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
 .dayp .grid2 label { margin: 6px 0 2px; font-size: 13px; }
 .dayp .grid2 input, .dayp .grid2 select { width: 100%; }
+.dayp button.danger { color: var(--danger, #b42318); }
 .dayp hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
 </style>
 <h2>{{ ctx.day | day("%A %d %B") }}<button type="button" aria-label="Close" onclick="this.closest('#panel').innerHTML=''">✕</button></h2>
@@ -47,6 +48,11 @@
       <button>Move</button>
     </form>
     {% endif %}
+    <form hx-post="/ui/day/{{ info.date }}/action" hx-target="#app"
+          hx-confirm="Remove this {{ s.discipline }} from {{ ctx.day | day('%a %d %b') }}?{% if s.key %} It's a key session, so it won't move to another day.{% endif %} If you already sent this week to Garmin, it stays on your watch until you delete it on the Garmin page. You can undo this here.">
+      <input type="hidden" name="kind" value="remove"><input type="hidden" name="workout_id" value="{{ s.id }}"><input type="hidden" name="around" value="{{ ctx.day }}">
+      <button class="danger">Remove</button>
+    </form>
   </div>
   {% endif %}
 

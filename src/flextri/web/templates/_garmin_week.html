@@ -1,9 +1,11 @@
-{#- The next days as Garmin Connect has them, in the athlete's look, with delete all or some.
-    Context: connected, days [(date, [GarminSession])], sessions, today, send_days, look, error, result, confirm. -#}
+{#- One calendar week as Garmin Connect has it (same weeks as the calendar), in the athlete's look, with delete all or some.
+    Context: connected, days [(date, [GarminSession])], sessions, today, span, look, error, result, confirm. -#}
 {% macro tick(s) -%}
 <input class="tick" type="checkbox" name="ids" value="{{ s.schedule_id }}" aria-label="Select {{ s.title }}, {{ s.day | longday }}">
 {%- endmacro %}
 {% macro mins(s) -%}{{ s.minutes ~ "′" if s.minutes else "" }}{%- endmacro %}
+{% set here = "/garmin/week?around=" ~ span.first.isoformat() %}
+{% macro keep_week() -%}<input type="hidden" name="around" value="{{ span.first.isoformat() }}">{%- endmacro %}
 {% macro ext_tag(s) -%}{% if not s.from_flextri %}<span class="tag" title="Put on Garmin by you or another app">Not flexTri</span>{% endif %}{%- endmacro %}
 {% set heading = "Here’s what Garmin thinks your week will look like" %}
 {% set n = sessions | length %}
@@ -12,12 +14,21 @@
 
 {% if connected %}
 <div class="wk">
+  {% if not confirm %}
+  <nav class="wknav" aria-label="Garmin week">
+    <button type="button" hx-get="/garmin/week?around={{ span.prev.isoformat() }}" hx-target="#garmin-week" aria-label="Previous week">‹</button>
+    <span class="strong">{% if span.number %}Week {{ span.number }} of {{ span.total }}{% else %}Week of {{ span.first.day }} {{ span.first | day("%b") }}{% endif %}
+      <small>{{ span.first | day("%a") }} {{ span.first.day }} {{ span.first | day("%b") }} – {{ span.last | day("%a") }} {{ span.last.day }} {{ span.last | day("%b") }}</small></span>
+    <button type="button" hx-get="/garmin/week?around={{ span.next.isoformat() }}" hx-target="#garmin-week" aria-label="Next week">›</button>
+    {% if not span.current %}<button type="button" class="link" hx-get="/garmin/week" hx-target="#garmin-week">This week</button>{% endif %}
+  </nav>
+  {% endif %}
   {% if look != "chat" %}{% if error %}<div class="banner error" role="alert">{{ error }}</div>{% endif %}
   {% if result %}<div class="banner done" role="status"><div class="strong">{{ result.title }}</div></div>{% endif %}{% endif %}
 
   {% if days is none %}
     {% if look == "chat" %}<div class="msg">I couldn’t read your Garmin calendar just now. {{ error }}</div>{% endif %}
-    <div class="bar"><button type="button" hx-get="/garmin/week" hx-target="#garmin-week">Try again</button></div>
+    <div class="bar"><button type="button" hx-get="{{ here }}" hx-target="#garmin-week">Try again</button></div>
 
   {% elif confirm %}
     {# ---------- step two: are you sure? ---------- #}
@@ -35,9 +46,10 @@
       </div>
     {% endif %}
     <form class="bar" hx-post="/garmin/week/delete/confirm" hx-target="#garmin-week">
+      {{ keep_week() }}
       {% for s in confirm.sessions %}<input type="hidden" name="ids" value="{{ s.schedule_id }}">{% endfor %}
       <button class="danger primary" type="submit">{{ "Yes, delete" if look == "chat" else "Delete " ~ k ~ " from Garmin" }}</button>
-      <button type="button" hx-get="/garmin/week" hx-target="#garmin-week">Keep them</button>
+      <button type="button" hx-get="{{ here }}" hx-target="#garmin-week">Keep them</button>
     </form>
 
   {% else %}
@@ -46,19 +58,20 @@
       {% if result %}<div class="msg">{{ result.title }}</div>{% endif %}
       {% if error %}<div class="msg">{{ error }}</div>{% endif %}
       {% if n %}
-        <div class="msg">{{ heading }}. {{ n }} session{{ "s" if n != 1 }} in the next {{ send_days }} days{% if ext %}, {{ ext }} of them not from me{% endif %}. Tick any you want gone.</div>
+        <div class="msg">{{ heading }}. {{ n }} session{{ "s" if n != 1 }} {{ span.label }}{% if ext %}, {{ ext }} of them not from me{% endif %}. Tick any you want gone.</div>
       {% else %}
-        <div class="msg">Garmin has nothing scheduled for the next {{ send_days }} days. Send this week and I’ll put your sessions there.</div>
+        <div class="msg">Garmin has nothing scheduled {{ span.label }}.{% if span.current %} Send this week and I’ll put your sessions there.{% endif %}</div>
       {% endif %}
     {% else %}
       <div>
         <h2>{{ heading }}</h2>
-        <div class="sub">{% if n %}{{ n }} session{{ "s" if n != 1 }} on your Garmin calendar in the next {{ send_days }} days. Tick the ones to delete.{% else %}Garmin has nothing scheduled for the next {{ send_days }} days. Send this week to put flexTri’s sessions there.{% endif %}</div>
+        <div class="sub">{% if n %}{{ n }} session{{ "s" if n != 1 }} on your Garmin calendar {{ span.label }}. Tick the ones to delete.{% else %}Garmin has nothing scheduled {{ span.label }}.{% if span.current %} Send this week to put flexTri’s sessions there.{% endif %}{% endif %}</div>
       </div>
     {% endif %}
 
     {% if n %}
     <form class="wkf" hx-post="/garmin/week/delete" hx-target="#garmin-week">
+      {{ keep_week() }}
       {% if look == "lanes" %}
         <div class="lanes">
           <div class="rope" aria-hidden="true"></div>

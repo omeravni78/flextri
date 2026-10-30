@@ -88,8 +88,10 @@ def test_connect_saves_tokens_and_forgets_password(account, made):
     assert account.connect(" me@x.com ", "right") is True
     assert account.connected
     assert made[0].email == "me@x.com" and made[0].password is None
-    saved = (account.tokens / TOKEN_FILE).read_text()
-    assert "right" not in saved and "di_token" in saved
+    assert not (account.tokens / TOKEN_FILE).exists()
+    saved = (account.tokens / "garmin_tokens.enc").read_bytes()
+    assert b"right" not in saved and b"di_token" not in saved  # encrypted on disk
+    assert account.vault.read() == '{"di_token": "t"}'
 
 
 def test_wrong_password_is_readable_and_saves_nothing(account):
@@ -149,7 +151,7 @@ def test_page_walks_from_login_to_send_cleanup_and_disconnect(web, account, made
     assert "accept that" in page and 'value="me@x.com"' in page
 
     page = web.post("/garmin/connect", data={"email": "me@x.com", "password": "right"}).text
-    assert "Garmin connected" in page and "Send this week to watch" in page
+    assert "Garmin connected" in page and "Send 7 days ahead to watch" in page
 
     assert "Finish the setup first" in web.post("/garmin/send").text
     assert web.put("/api/profile", json=PROFILE).status_code == 200

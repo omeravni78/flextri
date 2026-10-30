@@ -132,29 +132,55 @@ def test_week_and_delete_in_every_look(web, cal, look):
     page = web.get("/garmin").text
     assert f'class="g g-{look}"' in page and 'hx-get="/garmin/week"' in page
 
+    # The athlete's weeks start on Sunday, so today (Thu 29 Oct) sits in Sun 25 to Sat 31 Oct.
     week = web.get("/garmin/week").text
     assert "what Garmin thinks your week will look like" in week
-    assert "easy run" in week and "Long ride" in week and "Track Tuesday" in week
-    assert "Parkrun" not in week and "after the window" not in week
-    assert "Not flexTri" in week or "not from flexTri" in week
-    assert 'name="all" value="1"' in week and "Delete all 4" in week
+    assert "yesterday" in week and "easy run" in week and "Long ride" in week
+    assert "Parkrun" not in week and "Track Tuesday" not in week
+    assert 'name="all" value="1"' in week and "Delete all 3" in week
 
-    ask = web.post("/garmin/week/delete", data={"ids": ["2", "4"]}).text
+    nxt = web.get("/garmin/week?around=2026-11-01").text
+    assert "Track Tuesday" in nxt and "after the window" in nxt and "easy run" not in nxt
+    assert "Not flexTri" in nxt or "not from flexTri" in nxt
+
+    ask = web.post("/garmin/week/delete", data={"ids": ["4", "5"], "around": "2026-11-01"}).text
     assert cal.deleted == [] and cal.unscheduled == []  # asking deletes nothing
     assert "can’t be undone" in ask and ask.count('type="hidden" name="ids"') == 2
+    assert 'name="around" value="2026-11-01"' in ask
 
-    done = web.post("/garmin/week/delete/confirm", data={"ids": ["2", "4"]}).text
-    assert cal.deleted == [12] and cal.unscheduled == [4]
-    assert "Deleted 2 sessions from Garmin" in done and "easy run" not in done
+    done = web.post("/garmin/week/delete/confirm", data={"ids": ["4", "5"], "around": "2026-11-01"}).text
+    assert cal.deleted == [15] and cal.unscheduled == [4]
+    assert "Deleted 2 sessions from Garmin" in done and "Track Tuesday" not in done and "after the window" in done
 
 
 def test_delete_all_and_nothing_ticked(web, cal):
     assert "Tick the sessions" in web.post("/garmin/week/delete", data={}).text
     ask = web.post("/garmin/week/delete", data={"all": "1"}).text
-    assert ask.count('type="hidden" name="ids"') == 4
-    web.post("/garmin/week/delete/confirm", data={"ids": ["2", "3", "4", "5"]})
-    assert sorted(cal.deleted) == [12, 13, 15] and cal.unscheduled == [4]
-    assert "nothing scheduled" in web.get("/garmin/week").text
+    assert ask.count('type="hidden" name="ids"') == 3
+    web.post("/garmin/week/delete/confirm", data={"ids": ["1", "2", "3"]})
+    assert sorted(cal.deleted) == [11, 12, 13] and cal.unscheduled == []
+    assert "nothing scheduled this week" in web.get("/garmin/week").text
+
+
+def test_delete_never_reaches_outside_the_week_on_screen(web, cal):
+    web.post("/garmin/week/delete/confirm", data={"ids": ["4", "2"]})  # 4 is next week
+    assert cal.deleted == [12] and cal.unscheduled == []
+
+
+def test_week_matches_the_calendar_weeks(web):
+    week = web.get("/garmin/week").text
+    assert "Week 4 of 13" in web.get("/calendar").text and "Week 4 of 13" in week
+    assert "Sun 25 Oct – Sat 31 Oct" in week
+    assert 'around=2026-10-18' in week and 'around=2026-11-01' in week  # ‹ and ›
+    later = web.get("/garmin/week?around=2026-11-04").text
+    assert "Week 5 of 13" in later and "Sun 1 Nov – Sat 7 Nov" in later and ">This week<" in later
+
+
+def test_week_follows_a_monday_start(web):
+    assert web.put("/api/profile", json={**PROFILE, "week_start": 0}).status_code == 200
+    week = web.get("/garmin/week").text
+    assert "Mon 26 Oct – Sun 1 Nov" in week
+    assert "easy run" in week and "Track Tuesday" not in week
 
 
 def test_week_shows_garmin_errors(web, cal, monkeypatch):
